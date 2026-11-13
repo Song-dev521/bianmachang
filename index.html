@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>辩码场 · 多维度代码权衡分析</title>
+<style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(56, 189, 248, 0.18), transparent 26%),
+      radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.15), transparent 28%),
+      radial-gradient(circle at 50% 90%, rgba(14, 165, 233, 0.12), transparent 30%),
+      #05070d;
+    color: #e5e7eb;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(56, 189, 248, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border: 1px solid rgba(56, 189, 248, 0.18);
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(139, 92, 246, 0.06));
+    backdrop-filter: blur(10px);
+    margin-bottom: 20px;
+  }
+
+  .logo {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #38bdf8;
+    text-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
+  }
+
+  .logo span {
+    color: #a78bfa;
+    margin-left: 8px;
+    font-weight: 500;
+  }
+
+  .status {
+    font-size: 13px;
+    color: #94a3b8;
+    padding: 6px 12px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 999px;
+  }
+
+  .main {
+    display: grid;
+    grid-template-columns: 220px 1fr 1fr;
+    gap: 20px;
+  }
+
+  .sidebar {
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.55), rgba(15, 23, 42, 0.55));
+    border: 1px solid rgba(56, 189, 248, 0.18);
+    border-radius: 16px;
+    padding: 18px 14px;
+    backdrop-filter: blur(10px);
+  }
+
+  .sidebar h4 {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #64748b;
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+    padding-left: 8px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px;
+    margin-bottom: 8px;
+    border-radius: 10px;
+    color: #cbd5e1;
+    font-size: 14px;
+    border: 1px solid transparent;
+    transition: all 0.25s ease;
+    cursor: default;
+  }
+
+  .nav-item.active {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.18), rgba(139, 92, 246, 0.12));
+    border-color: rgba(56, 189, 248, 0.35);
+    color: #38bdf8;
+    box-shadow: 0 0 18px rgba(56, 189, 248, 0.12);
+  }
+
+  .nav-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #38bdf8;
+    box-shadow: 0 0 10px #38bdf8;
+  }
+
+  .panel {
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.45), rgba(15, 23, 42, 0.55));
+    border: 1px solid rgba(56, 189, 248, 0.18);
+    border-radius: 16px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+  }
+
+  .panel-title {
+    font-size: 14px;
+    color: #94a3b8;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-title::before {
+    content: "";
+    width: 3px;
+    height: 14px;
+    background: linear-gradient(180deg, #38bdf8, #a78bfa);
+    border-radius: 2px;
+  }
+
+  .code-input {
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    background: rgba(2, 6, 23, 0.7);
+    border: 1px solid rgba(56, 189, 248, 0.22);
+    border-radius: 12px;
+    padding: 16px;
+    color: #cbd5e1;
+    width: 100%;
+    min-height: 260px;
+    resize: vertical;
+    outline: none;
+  }
+
+  .code-input:focus {
+    border-color: rgba(56, 189, 248, 0.55);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+  }
+
+  .btn {
+    margin-top: 14px;
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #0ea5e9, #8b5cf6);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 8px 24px rgba(14, 165, 233, 0.28);
+  }
+
+  .btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 28px rgba(14, 165, 233, 0.42);
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .metric-card {
+    padding: 14px;
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(56, 189, 248, 0.18);
+    transition: all 0.25s ease;
+  }
+
+  .metric-card:hover {
+    border-color: rgba(56, 189, 248, 0.45);
+    transform: translateY(-2px);
+  }
+
+  .metric-label {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 6px;
+  }
+
+  .metric-value {
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .high { color: #f87171; text-shadow: 0 0 10px rgba(248, 113, 113, 0.35); }
+  .low { color: #38bdf8; text-shadow: 0 0 10px rgba(56, 189, 248, 0.35); }
+  .mid { color: #fbbf24; text-shadow: 0 0 10px rgba(251, 191, 36, 0.35); }
+
+  .result-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(56, 189, 248, 0.18);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  .result-card h4 {
+    font-size: 14px;
+    color: #38bdf8;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .result-card p {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #cbd5e1;
+  }
+
+  .conflict-strip {
+    margin-top: 18px;
+    padding: 18px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(139, 92, 246, 0.1));
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    position: relative;
+  }
+
+  .conflict-strip h4 {
+    font-size: 14px;
+    color: #a78bfa;
+    margin-bottom: 24px;
+  }
+
+  .nodes-wrap {
+    position: relative;
+    height: 80px;
+  }
+  .svg-line {
+    position: absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+  }
+  .flow-path {
+    fill:none;
+    stroke-width:2;
+    stroke-dasharray: 6 4;
+    stroke-dashoffset: 100;
+    opacity:0;
+    transition: opacity 0.4s ease;
+  }
+  .flow-path.active {
+    opacity:1;
+    animation: dashFlow 2.5s linear infinite;
+  }
+  @keyframes dashFlow {
+    to { stroke-dashoffset: 0; }
+  }
+
+  .nodes {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index:2;
+  }
+
+  .node {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #0f172a;
+    border: 2px solid #38bdf8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #38bdf8;
+    font-weight: 600;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+    position:relative;
+  }
+
+  .node:nth-child(2) { border-color: #a78bfa; color: #a78bfa; box-shadow: 0 0 12px rgba(139, 92, 246, 0.4); }
+  .node:nth-child(3) { border-color: #fbbf24; color: #fbbf24; box-shadow: 0 0 12px rgba(251, 191, 36, 0.4); }
+  .node:nth-child(4) { border-color: #34d399; color: #34d399; box-shadow: 0 0 12px rgba(52, 211, 153, 0.4); }
+
+  .node-label {
+    position: absolute;
+    top: 48px;
+    font-size: 12px;
+    color: #94a3b8;
+    white-space: nowrap;
+  }
+
+  .loader {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    color: #94a3b8;
+    font-size: 13px;
+    padding: 12px 0;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #38bdf8;
+    animation: blink 1.2s infinite ease-in-out;
+  }
+
+  .dot:nth-child(2) { animation-delay: 0.2s; background: #a78bfa; }
+  .dot:nth-child(3) { animation-delay: 0.4s; background: #fbbf24; }
+
+  @keyframes blink {
+    0%, 80%, 100% { opacity: 0.25; transform: scale(0.85); }
+    40% { opacity: 1; transform: scale(1.1); }
+  }
+
+  .status.ok { color: #34d399; border-color: rgba(52, 211, 153, 0.45); }
+  .status.warn { color: #fbbf24; border-color: rgba(251, 191, 36, 0.45); }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-left: auto;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .badge.high { background: rgba(248, 113, 113, 0.14); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.4); }
+  .badge.mid { background: rgba(251, 191, 36, 0.14); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.4); }
+  .badge.low { background: rgba(56, 189, 248, 0.14); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); }
+  .badge.idle { background: rgba(148, 163, 184, 0.12); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+
+  .result-card h4 { justify-content: space-between; }
+  .result-card.pending { opacity: 0.5; border-style: dashed; }
+  .result-card .content { white-space: pre-wrap; font-size: 13px; line-height: 1.75; color: #cbd5e1; }
+  .result-card.pending p { color: #64748b; }
+  .meta { font-size: 12px; color: #64748b; margin-top: 12px; letter-spacing: 0.5px; }
+
+  @media (max-width: 1100px) {
+    .main {
+      grid-template-columns: 1fr;
+    }
+    .sidebar {
+      display: none;
+    }
+  }
+</style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="logo">辩码场<span>多维度代码权衡分析</span></div>
+      <div class="status" id="statusText">正在检测后端…</div>
+    </div>
+
+    <div class="main">
+      <aside class="sidebar">
+        <h4>导航</h4>
+        <div class="nav-item active"><span class="nav-dot"></span>代码输入</div>
+        <div class="nav-item"><span class="nav-dot"></span>评审Skill</div>
+        <div class="nav-item"><span class="nav-dot"></span>冲突矩阵</div>
+        <div class="nav-item"><span class="nav-dot"></span>最终结论</div>
+      </aside>
+
+      <section class="panel">
+        <div class="panel-title">输入代码</div>
+        <textarea class="code-input" id="codeInput">import sqlite3
+username = input("请输入用户名：")
+conn = sqlite3.connect("test.db")
+cursor = conn.cursor()
+sql = f"select * from user where name = '{username}'"
+cursor.execute(sql)</textarea>
+        <button class="btn" id="runBtn">启动评审</button>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">评审结论</div>
+
+        <div id="loaderBox" style="display:none;">
+          <div class="loader">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span id="loaderText">安全评审中 · 性能评审中 · 架构评审中 · 规范评审中</span>
+          </div>
+        </div>
+
+        <div id="metricsBox">
+          <div class="metrics">
+            <div class="metric-card">
+              <div class="metric-label">安全风险</div>
+              <div class="metric-value" id="m-security">—</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">性能影响</div>
+              <div class="metric-value" id="m-performance">—</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">架构耦合</div>
+              <div class="metric-value" id="m-architecture">—</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">规范健壮性</div>
+              <div class="metric-value" id="m-standard">—</div>
+            </div>
+          </div>
+          <div class="meta" id="metaLine"></div>
+        </div>
+
+        <div id="resultBox"></div>
+
+        <div class="conflict-strip" id="conflictStrip" style="display:none;">
+          <h4>冲突权衡带</h4>
+          <div class="nodes-wrap">
+            <svg class="svg-line" viewBox="0 0 100 80" preserveAspectRatio="none">
+              <path id="path1" class="flow-path" stroke="#38bdf8" d="M10,40 L32,40"/>
+              <path id="path2" class="flow-path" stroke="#a78bfa" d="M32,40 L55,40"/>
+              <path id="path3" class="flow-path" stroke="#fbbf24" d="M55,40 L88,40"/>
+            </svg>
+            <div class="nodes">
+              <div class="node">安<span class="node-label">安全</span></div>
+              <div class="node">性<span class="node-label">性能</span></div>
+              <div class="node">架<span class="node-label">架构</span></div>
+              <div class="node">规<span class="node-label">规范</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+<script>
+  const API_BASE = location.protocol === "file:" ? "http://127.0.0.1:8000" : "";
+
+  const runBtn = document.getElementById("runBtn");
+  const codeInput = document.getElementById("codeInput");
+  const loaderBox = document.getElementById("loaderBox");
+  const loaderText = document.getElementById("loaderText");
+  const metricsBox = document.getElementById("metricsBox");
+  const metaLine = document.getElementById("metaLine");
+  const resultBox = document.getElementById("resultBox");
+  const conflictStrip = document.getElementById("conflictStrip");
+  const statusText = document.getElementById("statusText");
+  const paths = [document.getElementById('path1'),document.getElementById('path2'),document.getElementById('path3')];
+
+  // 后端状态：探测成功走真实评审，失败自动退回离线演示
+  const state = { backend: false, skills: [], model: "" };
+
+  const LEVEL_TEXT = {
+    security:     { high: "高危",       mid: "中等风险", low: "低风险" },
+    performance:  { high: "开销大",     mid: "一般",     low: "低影响" },
+    architecture: { high: "高耦合",     mid: "有缺陷",   low: "结构清晰" },
+    standard:     { high: "缺失防护",   mid: "较多问题", low: "较规范" }
+  };
+
+  function setStatus(text, cls) {
+    statusText.textContent = text;
+    statusText.className = "status" + (cls ? " " + cls : "");
+  }
+
+  async function probe() {
+    try {
+      const r = await fetch(API_BASE + "/api/health", { cache: "no-store" });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const d = await r.json();
+      state.backend = true;
+      state.skills = d.skills || [];
+      state.model = d.model || "";
+      setStatus(d.mode === "maas" ? "后端已连接 · " + d.model : "后端已连接 · 回放模式", "ok");
+    } catch (e) {
+      state.backend = false;
+      setStatus("离线演示模式（后端未启动）", "warn");
+    }
+  }
+
+  function reset() {
+    resultBox.innerHTML = "";
+    metaLine.textContent = "";
+    conflictStrip.style.display = "none";
+    paths.forEach(p => p.classList.remove("active"));
+    ["security", "performance", "architecture", "standard"].forEach(k => {
+      const el = document.getElementById("m-" + k);
+      el.textContent = "—";
+      el.className = "metric-value";
+    });
+  }
+
+  function ensureCards(skills) {
+    resultBox.innerHTML = "";
+    const map = {};
+    skills.forEach(s => {
+      const d = document.createElement("div");
+      d.className = "result-card pending";
+      d.innerHTML = '<h4>' + s.name + '<span class="badge idle">排队中</span></h4><p>等待调度…</p>';
+      resultBox.appendChild(d);
+      map[s.key] = d;
+    });
+    return map;
+  }
+
+  function applySkill(card, p) {
+    if (!card) return;
+    card.classList.remove("pending");
+    const label = (LEVEL_TEXT[p.key] || {})[p.level] || p.level;
+    card.querySelector("h4").innerHTML = p.name + '<span class="badge ' + p.level + '">' + label + '</span>';
+    const body = card.querySelector("p");
+    body.className = "content";
+    body.textContent = p.text;
+    const metric = document.getElementById("m-" + p.key);
+    if (metric) {
+      metric.textContent = label;
+      metric.className = "metric-value " + (p.level === "high" ? "high" : p.level === "mid" ? "mid" : "low");
+    }
+  }
+
+  function handleSSE(raw, cards, onSkill) {
+    let ev = "message", data = "";
+    raw.split("\n").forEach(ln => {
+      if (ln.startsWith("event:")) ev = ln.slice(6).trim();
+      else if (ln.startsWith("data:")) data += ln.slice(5).trim();
+    });
+    if (!data) return;
+
+    let p;
+    try { p = JSON.parse(data); } catch (e) { return; }
+
+    if (ev === "skill") {
+      applySkill(cards[p.key], p);
+      onSkill();
+    } else if (ev === "skill_error") {
+      const c = cards[p.key];
+      if (c) {
+        c.classList.remove("pending");
+        c.querySelector("h4").innerHTML = p.name + '<span class="badge high">失败</span>';
+        const b = c.querySelector("p");
+        b.className = "content";
+        b.textContent = p.error;
+      }
+      onSkill();
+    } else if (ev === "conflict_start") {
+      loaderText.textContent = "四路结论已就绪 · 正在识别冲突…";
+    } else if (ev === "conflict") {
+      const d = document.createElement("div");
+      d.className = "result-card";
+      d.innerHTML = '<h4>' + p.name + '<span class="badge mid">权衡</span></h4><p class="content"></p>';
+      d.querySelector("p").textContent = p.text;
+      resultBox.appendChild(d);
+      loaderBox.style.display = "none";
+      conflictStrip.style.display = "block";
+      animatePaths();
+    } else if (ev === "error") {
+      loaderText.textContent = p.message || "评审失败";
+    } else if (ev === "conflict_error") {
+      loaderBox.style.display = "none";
+      metaLine.textContent = "冲突汇总失败：" + p.error;
+    } else if (ev === "done") {
+      loaderBox.style.display = "none";
+      metaLine.textContent = "模式 " + p.mode + " · 总耗时 " + (p.total_ms / 1000).toFixed(1) + "s"
+        + (p.complete === false ? " · 部分 Skill 失败" : "");
+    }
+  }
+
+  async function runReal(code) {
+    const cards = ensureCards(state.skills);
+    const total = state.skills.length || 4;
+    let finished = 0;
+    loaderBox.style.display = "block";
+    metricsBox.style.display = "block";
+    loaderText.textContent = "四路 Skill 并发评审中 · 0/" + total;
+
+    const res = await fetch(API_BASE + "/api/review", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code })
+    });
+    if (!res.ok || !res.body) throw new Error("后端返回 " + res.status);
+
+    const reader = res.body.getReader();
+    const dec = new TextDecoder("utf-8");
+    let buf = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let idx;
+      while ((idx = buf.indexOf("\n\n")) >= 0) {
+        const raw = buf.slice(0, idx);
+        buf = buf.slice(idx + 2);
+        handleSSE(raw, cards, () => {
+          finished++;
+          loaderText.textContent = "四路 Skill 并发评审中 · " + finished + "/" + total;
+        });
+      }
+    }
+  }
+
+  async function animatePaths() {
+    paths.forEach(p => p.classList.remove("active"));
+    await new Promise(r => setTimeout(r, 300));
+    paths[0].classList.add("active");
+    await new Promise(r => setTimeout(r, 400));
+    paths[1].classList.add("active");
+    await new Promise(r => setTimeout(r, 400));
+    paths[2].classList.add("active");
+  }
+
+  const mockResp = `【安全评审结论】
+代码存在SQL注入高危漏洞，直接拼接用户输入到SQL语句，攻击者可构造恶意输入篡改、读取数据库数据。建议使用参数化查询。
+
+【性能评审结论】
+单次查询逻辑简单，性能压力不大；但未做连接复用，频繁打开关闭数据库连接会带来额外开销，适合增加连接池。
+
+【架构评审结论】
+数据库操作和业务输入耦合在一起，没有分层，职责混杂；不利于后续扩展、单元测试。建议抽离数据访问层。
+
+【规范评审结论】
+缺少异常捕获、资源关闭逻辑，没有注释，变量命名尚可，不符合工程代码健壮性要求，需要补充try-finally关闭连接。
+
+【汇总总览】
+冲突点：安全评审判定为高危漏洞必须修复；性能评审认为当前小规模场景影响微弱；架构评审关注长期可维护性；规范评审聚焦鲁棒性。
+这是典型软件工程权衡：快速原型优先，还是安全、可维护优先，适合课堂复盘讨论。`;
+
+  async function runMock() {
+    loaderBox.style.display = "block";
+    loaderText.textContent = "离线演示 · 使用内置样例结论";
+    await new Promise(r => setTimeout(r, 1200));
+    loaderBox.style.display = "none";
+
+    const blocks = mockResp.split(/【(.+?)】/).filter(Boolean);
+    for (let i = 0; i < blocks.length; i += 2) {
+      const title = blocks[i];
+      const content = blocks[i + 1];
+      const d = document.createElement("div");
+      d.className = "result-card";
+      d.innerHTML = '<h4>' + title + '</h4><p class="content"></p>';
+      d.querySelector("p").textContent = content.trim();
+      resultBox.appendChild(d);
+    }
+
+    // 样例结论对应的指标，避免离线模式下指标卡空白
+    const sample = { security: ["high", "高危"], performance: ["low", "低影响"], architecture: ["mid", "有缺陷"], standard: ["high", "缺失防护"] };
+    Object.keys(sample).forEach(k => {
+      const el = document.getElementById("m-" + k);
+      el.textContent = sample[k][1];
+      el.className = "metric-value " + sample[k][0];
+    });
+
+    conflictStrip.style.display = "block";
+    await animatePaths();
+    metaLine.textContent = "模式 离线演示 · 未调用后端";
+  }
+
+  runBtn.onclick = async () => {
+    const code = codeInput.value.trim();
+    if (!code) return;
+    runBtn.disabled = true;
+    reset();
+    try {
+      if (state.backend) {
+        await runReal(code);
+      } else {
+        await runMock();
+      }
+    } catch (e) {
+      loaderBox.style.display = "none";
+      setStatus("后端调用失败，已回退离线演示", "warn");
+      state.backend = false;
+      await runMock();
+      metaLine.textContent = "后端调用失败（" + e.message + "），已回退离线演示";
+    } finally {
+      runBtn.disabled = false;
+    }
+  };
+
+  probe();
+</script>
+</body>
+</html>
