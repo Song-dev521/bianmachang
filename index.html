@@ -3,623 +3,640 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>辩码场 · 让冲突先上台</title>
+<title>辩码场 · 多维代码权衡评审大屏</title>
 <style>
-  ::selection { background: rgba(92,157,255,.28); color: #fff; }
-
+  ::selection { background: rgba(53,198,255,.30); color: #fff; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #0A0E17;
-    --ink: #E8EDF7;
-    --ink-2: #9AA5BF;
-    --ink-3: #6C7691;
-    --ink-4: #4A5470;
-    --line: rgba(148,170,220,.13);
-    --line-soft: rgba(148,170,220,.07);
-    --accent: #5B8DEF;
-    --accent-hi: #7DABFF;
-    --conf: #6FA4F5;
-    --sec: #E5697A;
-    --perf: #D9A05B;
-    --arch: #8FA6C4;
-    --std: #56B3A2;
+    --bg0: #020717;
+    --bg1: #051230;
+    --panel: rgba(9,28,66,.60);
+    --panel-hi: rgba(14,40,92,.70);
+    --line: rgba(64,150,255,.34);
+    --line-soft: rgba(64,150,255,.14);
+    --cyan: #35C6FF;
+    --blue: #3D7EFF;
+    --ink: #DCEBFF;
+    --ink-2: #8FB0DC;
+    --ink-3: #5F7FB4;
+    --ink-4: #3E5A8C;
+    --sec: #FF5E6C;
+    --perf: #FFB84D;
+    --arch: #5EA0FF;
+    --std: #35E0A1;
     --mono: "JetBrains Mono", "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
     --sans: "Inter", -apple-system, "Segoe UI Variable Display", "Segoe UI", "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", sans-serif;
   }
 
   html, body { height: 100%; }
-
   body {
     font-family: var(--sans);
-    background: var(--bg);
+    background: var(--bg0);
     color: var(--ink);
     -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
-    letter-spacing: .008em;
+    overflow: hidden;
+    letter-spacing: .01em;
   }
 
-  /* ---------- 背景层：一层蓝色顶光 + 网格 ---------- */
+  /* ================= 背景层 ================= */
   .bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-
-  .aurora {
-    position: absolute; border-radius: 50%;
-    filter: blur(130px);
+  .bg .grad {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(1100px 520px at 50% -6%, rgba(38,110,255,.22), transparent 65%),
+      radial-gradient(900px 500px at 92% 104%, rgba(30,80,200,.14), transparent 70%),
+      radial-gradient(800px 460px at 4% 100%, rgba(30,90,210,.10), transparent 72%),
+      linear-gradient(180deg, var(--bg0), var(--bg1) 130%);
   }
-  .aurora.a1 {
-    width: 1200px; height: 700px; top: -460px; left: 50%;
-    transform: translateX(-50%);
-    background: radial-gradient(circle, rgba(70,120,235,.13), transparent 68%);
-  }
-  .aurora.a2 {
-    width: 860px; height: 640px; top: -280px; right: -260px;
-    background: radial-gradient(circle, rgba(56,100,190,.10), transparent 70%);
-  }
-  .aurora.a3 {
-    width: 700px; height: 500px; bottom: -320px; left: -220px;
-    background: radial-gradient(circle, rgba(56,120,190,.06), transparent 72%);
-  }
-
-  .grid-lines {
+  .bg .gridlines {
     position: absolute; inset: 0;
     background-image:
-      linear-gradient(rgba(130,160,230,.042) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(130,160,230,.042) 1px, transparent 1px);
-    background-size: 88px 88px;
-    -webkit-mask-image: radial-gradient(ellipse 85% 55% at 50% 0%, #000 0%, transparent 74%);
-    mask-image: radial-gradient(ellipse 85% 55% at 50% 0%, #000 0%, transparent 74%);
+      linear-gradient(rgba(70,140,255,.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(70,140,255,.045) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 40%, #000, transparent 90%);
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 40%, #000, transparent 90%);
   }
-
-  .noise {
-    position: absolute; inset: 0; opacity: .022;
+  .bg .sweepline {
+    position: absolute; left: 0; right: 0; top: -12%;
+    height: 240px;
+    background: linear-gradient(180deg, transparent, rgba(53,198,255,.045), transparent);
+    animation: sweep 11s linear infinite;
+  }
+  @keyframes sweep { to { transform: translateY(1100%); } }
+  .bg .noise {
+    position: absolute; inset: 0; opacity: .025;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
-  /* ---------- 框架 ---------- */
+  /* ================= 框架 ================= */
   .shell {
     position: relative; z-index: 1;
-    max-width: 1520px;
-    margin: 0 auto;
-    padding: 0 40px 24px;
     height: 100vh;
-    display: flex;
-    flex-direction: column;
+    display: flex; flex-direction: column;
+    padding: 14px 22px 0;
   }
 
-  /* ---------- 顶栏 ---------- */
-  .top {
-    display: flex; align-items: center; gap: 22px;
-    height: 86px; flex: 0 0 86px;
-    border-bottom: 1px solid var(--line-soft);
-  }
+  /* ================= 顶栏 ================= */
+  .hd { flex: 0 0 72px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
+  .hd-side { display: flex; align-items: center; gap: 14px; font-family: var(--mono); font-size: 11px; color: var(--ink-3); letter-spacing: .08em; }
+  .hd-side.r { justify-content: flex-end; }
+  .hd-clock { font-family: var(--mono); font-size: 21px; color: var(--cyan); text-shadow: 0 0 14px rgba(53,198,255,.45); font-variant-numeric: tabular-nums; letter-spacing: .06em; }
 
-  .brand { display: flex; align-items: center; gap: 13px; }
-
-  .mark {
-    width: 33px; height: 33px; border-radius: 8px;
-    display: grid; place-items: center;
-    font-size: 16px; font-weight: 600; color: #F2F6FF;
-    background: linear-gradient(180deg, #4E86F2, #2E5FC4);
-    box-shadow:
-      0 1px 0 rgba(255,255,255,.28) inset,
-      0 8px 22px -10px rgba(70,125,240,.55);
+  .hd-title { text-align: center; position: relative; padding: 0 30px; }
+  .hd-title-row { display: flex; align-items: center; justify-content: center; gap: 18px; }
+  .hd-deco { width: 170px; height: 2px; background: linear-gradient(90deg, transparent, var(--cyan)); position: relative; }
+  .hd-deco.r { transform: scaleX(-1); }
+  .hd-deco::after {
+    content: ""; position: absolute; right: -1px; top: -3px;
+    width: 7px; height: 7px; transform: rotate(45deg);
+    background: var(--cyan); box-shadow: 0 0 10px var(--cyan);
   }
-
-  .brand-txt h1 {
-    font-size: 16.5px; font-weight: 600; letter-spacing: .3em;
-    color: #EDF2FC;
-  }
-  .brand-txt p {
-    margin-top: 6px;
-    font-family: var(--mono);
-    font-size: 9px; letter-spacing: .26em;
-    color: var(--ink-4); text-transform: uppercase;
-  }
-
-  .top-mid { display: flex; align-items: center; gap: 8px; margin-left: 22px; }
-  .tag {
-    font-family: var(--mono);
-    font-size: 9.5px; letter-spacing: .12em;
-    color: var(--ink-3);
-    padding: 5px 9px;
-    border: 1px solid var(--line-soft);
-    border-radius: 5px;
+  .hd-title h1 {
+    font-size: 27px; font-weight: 700; letter-spacing: .5em; text-indent: .5em;
+    color: #EAF5FF;
+    text-shadow: 0 0 22px rgba(53,198,255,.6), 0 2px 0 rgba(6,20,50,.9);
     white-space: nowrap;
   }
-
-  .top-right { margin-left: auto; display: flex; align-items: center; gap: 18px; }
+  .hd-title p {
+    margin-top: 7px;
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: .34em;
+    color: var(--ink-3); white-space: nowrap;
+  }
 
   .state-pill {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 11.5px; letter-spacing: .06em; color: var(--ink-2);
-    padding: 6px 12px 6px 10px;
-    border: 1px solid var(--line-soft);
-    border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; letter-spacing: .1em; color: var(--ink-2);
+    padding: 6px 14px 6px 11px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
   }
-  .led { width: 5px; height: 5px; border-radius: 50%; background: var(--ink-4); }
-  .state-pill.ready .led { background: var(--std); }
-  .state-pill.busy .led { background: var(--perf); animation: pulse 1.2s ease-in-out infinite; }
-  .state-pill.done .led { background: var(--accent-hi); }
-  @keyframes pulse { 50% { opacity: .3; } }
+  .led { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-4); }
+  .state-pill.ready .led { background: var(--std); box-shadow: 0 0 8px var(--std); }
+  .state-pill.busy .led { background: var(--perf); box-shadow: 0 0 8px var(--perf); animation: blink 1.1s ease-in-out infinite; }
+  .state-pill.done .led { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+  @keyframes blink { 50% { opacity: .25; } }
 
-  /* ---------- 主体 ---------- */
-  .main {
+  /* ================= 主体网格 ================= */
+  .grid {
     flex: 1 1 auto; min-height: 0;
     display: grid;
-    grid-template-columns: minmax(420px, .94fr) 1.06fr;
-    gap: 20px;
-    padding-top: 22px;
+    grid-template-columns: minmax(360px, .92fr) 1.18fr minmax(340px, .98fr);
+    gap: 14px;
+    padding: 12px 0 10px;
   }
 
   .panel {
     position: relative;
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    background: linear-gradient(180deg, #0E1523, #0B101B);
-    box-shadow:
-      0 1px 0 rgba(160,190,255,.05) inset,
-      0 40px 80px -50px #000;
-    overflow: hidden;
+    border: 1px solid var(--line-soft);
+    background: linear-gradient(180deg, var(--panel-hi), var(--panel));
+    box-shadow: 0 0 30px rgba(30,90,220,.10) inset, 0 18px 44px -30px #000;
+    display: flex; flex-direction: column;
+    min-height: 0;
   }
+  /* 四角括号 */
+  .panel::before, .panel::after,
+  .panel .ck1::before, .panel .ck1::after {
+    content: ""; position: absolute; width: 14px; height: 14px; pointer-events: none;
+  }
+  .panel::before { top: -1px; left: -1px; border-top: 2px solid var(--cyan); border-left: 2px solid var(--cyan); }
+  .panel::after  { top: -1px; right: -1px; border-top: 2px solid var(--cyan); border-right: 2px solid var(--cyan); }
+  .panel .ck1::before { bottom: -1px; left: -1px; border-bottom: 2px solid var(--cyan); border-left: 2px solid var(--cyan); }
+  .panel .ck1::after  { bottom: -1px; right: -1px; border-bottom: 2px solid var(--cyan); border-right: 2px solid var(--cyan); }
+  .panel > .ck1 { position: absolute; inset: 0; pointer-events: none; }
 
-  .col-left { display: flex; flex-direction: column; min-height: 0; gap: 16px; }
+  .p-hd {
+    flex: 0 0 46px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--line-soft);
+    background: linear-gradient(90deg, rgba(53,150,255,.10), transparent 65%);
+  }
+  .p-tag {
+    font-family: var(--mono); font-size: 10px; color: var(--cyan);
+    border: 1px solid rgba(53,198,255,.45); padding: 2px 6px;
+    text-shadow: 0 0 8px rgba(53,198,255,.5);
+    clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+  }
+  .p-hd h2 { font-size: 14.5px; font-weight: 600; letter-spacing: .24em; color: #E7F2FF; white-space: nowrap; }
+  .p-en { font-family: var(--mono); font-size: 9px; letter-spacing: .22em; color: var(--ink-4); margin-top: 3px; white-space: nowrap; }
+  .p-hd .right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 
-  /* ---------- 编辑器 ---------- */
-  .editor { display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto; }
+  /* ================= 左：代码提交台 ================= */
+  .cases { flex: 0 0 auto; display: flex; gap: 7px; padding: 10px 14px 0; flex-wrap: wrap; }
+  .chip {
+    font-size: 11px; letter-spacing: .04em; color: var(--ink-2);
+    padding: 5px 10px; cursor: pointer;
+    border: 1px solid var(--line-soft);
+    background: rgba(30,80,190,.10);
+    clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+    transition: all .2s ease; white-space: nowrap; user-select: none;
+  }
+  .chip:hover { color: var(--ink); border-color: var(--line); }
+  .chip.on {
+    color: #EAF5FF; border-color: rgba(53,198,255,.7);
+    background: rgba(53,150,255,.18);
+    box-shadow: 0 0 14px rgba(53,198,255,.25), 0 0 14px rgba(53,198,255,.15) inset;
+    text-shadow: 0 0 8px rgba(53,198,255,.6);
+  }
+  .chip b { color: var(--cyan); font-weight: 600; margin-right: 4px; }
 
   .tabbar {
-    display: flex; align-items: center; gap: 12px;
-    padding: 0 18px; height: 44px; flex: 0 0 44px;
-    border-bottom: 1px solid var(--line-soft);
-    background: rgba(120,160,240,.018);
+    flex: 0 0 40px; display: flex; align-items: center; gap: 10px;
+    padding: 0 14px; border-bottom: 1px solid var(--line-soft); margin-top: 10px;
   }
   .tab {
     display: flex; align-items: center; gap: 8px;
-    font-family: var(--mono); font-size: 11.5px; color: #BCC7DF;
-    padding: 5px 11px; border-radius: 6px;
-    background: rgba(110,150,235,.07);
-    border: 1px solid rgba(130,165,240,.10);
+    font-family: var(--mono); font-size: 11.5px; color: #BFDBFF;
+    padding: 4px 11px;
+    background: rgba(40,110,240,.14);
+    border: 1px solid rgba(70,150,255,.35);
+    clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
   }
-  .tab i { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); opacity: .75; display: block; }
-  .tabbar .lang {
-    margin-left: auto;
-    font-family: var(--mono); font-size: 9.5px; letter-spacing: .16em;
-    color: var(--ink-4);
-  }
+  .tab i { width: 5px; height: 5px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 7px var(--cyan); }
+  .tabbar .lang { margin-left: auto; font-family: var(--mono); font-size: 9.5px; letter-spacing: .16em; color: var(--ink-4); }
 
-  .code-area { position: relative; flex: 1 1 auto; min-height: 0; display: flex; background: #090D16; }
-
+  .code-area { flex: 1 1 auto; min-height: 0; display: flex; background: rgba(2,10,28,.65); }
   .gutter {
-    flex: 0 0 54px;
-    padding: 18px 12px 18px 0;
-    text-align: right;
-    font-family: var(--mono); font-size: 11.5px; line-height: 1.95;
-    color: #303B58;
-    border-right: 1px solid rgba(148,170,220,.06);
-    overflow: hidden;
-    user-select: none;
+    flex: 0 0 50px; padding: 14px 10px 14px 0;
+    text-align: right; font-family: var(--mono); font-size: 11.5px; line-height: 1.92;
+    color: #2C4A7E; border-right: 1px solid rgba(64,150,255,.10);
+    overflow: hidden; user-select: none;
   }
   .gutter span { display: block; }
-
   .code-layer { position: relative; flex: 1 1 auto; min-width: 0; }
-
   .hlayer, #codeInput {
-    position: absolute; inset: 0;
-    margin: 0;
-    padding: 18px 22px;
-    font-family: var(--mono);
-    font-size: 12.5px;
-    line-height: 1.95;
-    letter-spacing: 0;
-    white-space: pre;
-    tab-size: 4;
-    overflow: auto;
+    position: absolute; inset: 0; margin: 0;
+    padding: 14px 18px;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.92;
+    white-space: pre; tab-size: 4; overflow: auto;
   }
-
-  .hlayer {
-    z-index: 1; pointer-events: none; overflow: hidden;
-    color: #BFCADF;
-  }
-
+  .hlayer { z-index: 1; pointer-events: none; overflow: hidden; color: #B9D2F5; }
   #codeInput {
-    z-index: 2;
-    width: 100%; height: 100%;
+    z-index: 2; width: 100%; height: 100%;
     border: 0; outline: none; resize: none;
-    background: transparent;
-    color: transparent;
-    caret-color: #E8EDF7;
+    background: transparent; color: transparent;
+    caret-color: var(--cyan);
     -webkit-text-fill-color: transparent;
   }
-  #codeInput::selection { background: rgba(92,157,255,.26); -webkit-text-fill-color: transparent; }
-
-  .tok-k { color: #82AAFF; }
-  .tok-s { color: #9DD3B8; }
-  .tok-c { color: #3E4A66; font-style: italic; }
-  .tok-n { color: #EFB46B; }
-  .tok-b { color: #7DCFFF; }
-  .tok-t { color: #D8C08A; }
+  #codeInput::selection { background: rgba(53,198,255,.28); -webkit-text-fill-color: transparent; }
+  .tok-k { color: #6FB3FF; text-shadow: 0 0 6px rgba(111,179,255,.35); }
+  .tok-s { color: #43E6B0; }
+  .tok-c { color: #3A5B94; font-style: italic; }
+  .tok-n { color: #FFC164; }
+  .tok-b { color: #64D8FF; }
+  .tok-t { color: #FFD37A; }
 
   .editor-foot {
-    flex: 0 0 auto;
-    display: flex; align-items: center; gap: 14px;
-    padding: 13px 16px;
-    border-top: 1px solid var(--line-soft);
-    background: rgba(120,160,240,.018);
+    flex: 0 0 auto; display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px; border-top: 1px solid var(--line-soft);
+    background: linear-gradient(90deg, rgba(53,150,255,.07), transparent);
   }
-  .file-meta {
-    font-family: var(--mono); font-size: 10.5px; color: var(--ink-4);
-    letter-spacing: .05em;
-  }
-  .file-meta b { color: var(--ink-2); font-weight: 500; }
+  .file-meta { font-family: var(--mono); font-size: 10.5px; color: var(--ink-4); letter-spacing: .05em; }
+  .file-meta b { color: var(--cyan); font-weight: 500; }
 
   .run {
     margin-left: auto;
     display: inline-flex; align-items: center; gap: 9px;
-    padding: 10px 20px;
-    border: 0; border-radius: 8px;
-    font-family: var(--sans);
-    font-size: 13px; font-weight: 600; letter-spacing: .06em;
-    color: #FFFFFF; cursor: pointer;
-    background: linear-gradient(180deg, #4E86F2, #3168CE);
-    box-shadow:
-      0 1px 0 rgba(255,255,255,.24) inset,
-      0 1px 2px rgba(0,0,0,.4),
-      0 10px 28px -14px rgba(70,125,240,.7);
-    transition: transform .16s ease, filter .2s ease, opacity .2s ease;
+    padding: 10px 22px; border: 0; cursor: pointer;
+    font-family: var(--sans); font-size: 13.5px; font-weight: 600; letter-spacing: .14em;
+    color: #F2FAFF;
+    background: linear-gradient(180deg, #2FA8E8, #1D6FD8);
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+    text-shadow: 0 1px 3px rgba(4,20,50,.6);
+    box-shadow: 0 0 22px rgba(45,150,255,.4);
+    transition: filter .2s ease, transform .15s ease, opacity .2s ease;
   }
-  .run:hover:not(:disabled) { filter: brightness(1.09); transform: translateY(-1px); }
-  .run:active:not(:disabled) { transform: translateY(0) scale(.995); }
+  .run:hover:not(:disabled) { filter: brightness(1.13); transform: translateY(-1px); }
+  .run:active:not(:disabled) { transform: scale(.99); }
   .run:disabled { opacity: .55; cursor: progress; }
   .run kbd {
-    font-family: var(--mono); font-size: 9.5px; padding: 2px 6px;
-    border-radius: 4px; border: 1px solid rgba(255,255,255,.28);
-    color: rgba(255,255,255,.75); letter-spacing: 0; background: rgba(255,255,255,.08);
+    font-family: var(--mono); font-size: 9px; padding: 2px 6px;
+    border: 1px solid rgba(255,255,255,.4); border-radius: 3px;
+    color: rgba(255,255,255,.85); background: rgba(255,255,255,.10); letter-spacing: 0;
   }
 
-  /* ---------- 右栏 ---------- */
-  .col-right { display: flex; flex-direction: column; min-height: 0; gap: 14px; }
+  /* ================= 中：态势 + 冲突 ================= */
+  .col-mid { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+  .p-arena { flex: 1 1 54%; }
+  .p-conflict { flex: 1 1 46%; }
 
-  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; flex: 0 0 auto; }
+  .arena-wrap { flex: 1 1 auto; min-height: 0; position: relative; }
+  .arena-wrap svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-  .metric {
-    position: relative;
-    padding: 13px 14px 12px;
-    border: 1px solid var(--line-soft);
-    border-radius: 10px;
-    background: rgba(120,160,240,.022);
-    transition: border-color .3s ease, background .3s ease;
-  }
-  .metric .m-label {
-    font-size: 10.5px; color: var(--ink-3); letter-spacing: .06em;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .metric .m-label em {
-    font-family: var(--mono); font-size: 8.5px; font-style: normal;
-    letter-spacing: .14em; color: #3D4763;
-  }
-  .metric .m-value {
-    margin-top: 9px;
-    font-size: 18px; font-weight: 500; letter-spacing: .02em;
-    color: var(--ink-4);
-    font-variant-numeric: tabular-nums;
-    transition: color .35s ease;
-    display: flex; align-items: center; gap: 7px;
-  }
-  .metric .m-value::before {
-    content: ""; width: 5px; height: 5px; border-radius: 50%;
-    background: currentColor; opacity: .55; flex: 0 0 auto;
-  }
-  .metric .m-bar {
-    margin-top: 11px; height: 1px; border-radius: 1px;
-    background: rgba(148,170,220,.09); overflow: hidden;
-  }
-  .metric .m-bar i {
-    display: block; height: 100%; width: 0;
-    background: var(--c, var(--ink-4));
-    transition: width .8s cubic-bezier(.2,.8,.2,1);
-  }
-  .metric.hot { border-color: rgba(229,105,122,.24); background: rgba(229,105,122,.04); }
-  .metric.warm { border-color: rgba(217,160,91,.22); background: rgba(217,160,91,.035); }
-  .metric.cool { border-color: rgba(86,179,162,.22); background: rgba(86,179,162,.035); }
+  .progress { display: flex; gap: 4px; }
+  .progress i { width: 22px; height: 2px; background: rgba(64,150,255,.15); transition: background .4s ease; }
+  .progress i.on { background: var(--c, var(--cyan)); box-shadow: 0 0 8px var(--c, var(--cyan)); }
 
-  /* 结果容器 */
-  .verdicts { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  /* SVG 态势图 */
+  .ring-spin { transform-origin: 320px 210px; animation: rot 26s linear infinite; }
+  .ring-spin2 { transform-origin: 320px 210px; animation: rot 40s linear infinite reverse; }
+  @keyframes rot { to { transform: rotate(360deg); } }
 
-  .vhead { display: flex; align-items: center; gap: 12px; padding: 2px 2px 12px; }
-  .vhead .kicker {
-    font-family: var(--mono); font-size: 9.5px; letter-spacing: .22em;
-    color: var(--ink-4); text-transform: uppercase;
+  .beam { fill: none; stroke: rgba(64,150,255,.20); stroke-width: 1.3; stroke-dasharray: 3 7; }
+  .beam.live {
+    stroke: var(--c); stroke-width: 1.8; stroke-dasharray: 5 9;
+    animation: dashflow .55s linear infinite;
+    filter: drop-shadow(0 0 4px var(--c));
   }
-  .vhead .rule { flex: 1 1 auto; height: 1px; background: var(--line-soft); }
-  .vhead .counter {
-    font-family: var(--mono); font-size: 10.5px; color: var(--ink-3);
-    font-variant-numeric: tabular-nums;
-  }
+  .beam.done { stroke: var(--c); stroke-width: 2; stroke-dasharray: none; opacity: .85; filter: drop-shadow(0 0 5px var(--c)); }
+  @keyframes dashflow { to { stroke-dashoffset: -28; } }
 
-  .vlist {
-    flex: 1 1 auto; min-height: 0; overflow-y: auto;
-    display: flex; flex-direction: column; gap: 10px;
-    padding-right: 5px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(148,170,220,.15) transparent;
-  }
-  .vlist::-webkit-scrollbar { width: 5px; }
-  .vlist::-webkit-scrollbar-thumb { background: rgba(148,170,220,.14); border-radius: 3px; }
+  .node-box { fill: rgba(9,30,72,.85); stroke: rgba(64,150,255,.30); stroke-width: 1.2; }
+  .node.run .node-box { stroke: var(--c); filter: drop-shadow(0 0 8px var(--c)); }
+  .node.done .node-box { stroke: var(--c); fill: rgba(16,48,110,.9); filter: drop-shadow(0 0 9px var(--c)); }
+  .node-idx { font-family: var(--mono); font-size: 10px; fill: var(--cyan); opacity: .85; }
+  .node-name { font-size: 14.5px; font-weight: 600; fill: #E7F2FF; letter-spacing: .18em; }
+  .node-sub { font-family: var(--mono); font-size: 8.5px; fill: #4A6BA6; letter-spacing: .18em; }
+  .node-state { font-family: var(--mono); font-size: 10.5px; fill: #5F7FB4; }
+  .node.run .node-state { fill: var(--perf); animation: blink 1s ease-in-out infinite; }
+  .node.done .node-state { fill: var(--c); }
+  .node-level { font-family: var(--mono); font-size: 12px; font-weight: 600; }
 
-  .card {
-    border: 1px solid var(--line-soft);
-    border-radius: 11px;
-    background: linear-gradient(180deg, rgba(120,160,240,.035), rgba(120,160,240,.008));
-    padding: 15px 17px 16px;
-    position: relative;
-    transition: border-color .35s ease, background .35s ease;
-  }
-  .card.on { border-color: rgba(148,175,235,.16); }
+  .hub-core { fill: rgba(10,34,80,.92); stroke: var(--cyan); stroke-width: 1.4; filter: drop-shadow(0 0 14px rgba(53,198,255,.5)); }
+  .hub-title { font-size: 13px; font-weight: 600; fill: #EAF5FF; letter-spacing: .3em; text-anchor: middle; }
+  .hub-sub { font-family: var(--mono); font-size: 8.5px; fill: #4A6BA6; letter-spacing: .3em; text-anchor: middle; }
+  .hub-status { font-family: var(--mono); font-size: 11px; fill: var(--cyan); text-anchor: middle; }
+  .hub-flash .hub-core { stroke: var(--perf); filter: drop-shadow(0 0 16px rgba(255,184,77,.6)); }
 
-  .card-head { display: flex; align-items: flex-start; gap: 11px; }
-  .card-idx {
-    font-family: var(--mono); font-size: 9.5px; color: #3D4763;
-    letter-spacing: .1em; padding-top: 3px;
-  }
-  .card-title { font-size: 13.5px; font-weight: 550; letter-spacing: .05em; color: #E4EAF6; }
-  .card-sub {
-    font-family: var(--mono); font-size: 8.5px; letter-spacing: .18em;
-    color: #46506B; margin-top: 4px; text-transform: uppercase;
-  }
-  .sev {
-    margin-left: auto;
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 10.5px; font-weight: 500; letter-spacing: .05em;
-    padding: 4px 10px 4px 8px; border-radius: 999px;
-    color: var(--ink-3); border: 1px solid var(--line-soft);
-    background: rgba(120,160,240,.03);
-    transition: all .4s ease;
-    white-space: nowrap;
-  }
-  .sev::before {
-    content: ""; width: 4px; height: 4px; border-radius: 50%;
-    background: currentColor; opacity: .8;
-  }
-  .sev.high { color: #E5697A; border-color: rgba(229,105,122,.30); background: rgba(229,105,122,.08); }
-  .sev.mid  { color: #D9A05B; border-color: rgba(217,160,91,.28); background: rgba(217,160,91,.07); }
-  .sev.low  { color: #56B3A2; border-color: rgba(86,179,162,.28); background: rgba(86,179,162,.07); }
-  .sev.fail { color: #7E87A0; }
+  /* 冲突矩阵 */
+  .cf-count { font-family: var(--mono); font-size: 11px; color: var(--perf); text-shadow: 0 0 8px rgba(255,184,77,.4); }
+  .cf-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 12px 16px; scrollbar-width: thin; scrollbar-color: rgba(64,150,255,.3) transparent; }
+  .cf-body::-webkit-scrollbar { width: 5px; }
+  .cf-body::-webkit-scrollbar-thumb { background: rgba(64,150,255,.3); border-radius: 3px; }
 
-  .card-body { margin-top: 12px; font-size: 12.5px; line-height: 1.9; color: #9BA6C0; }
-  .card-body p { margin-bottom: 8px; }
-  .card-body p:last-child { margin-bottom: 0; }
-  .card-body .lbl { color: #C7D1E6; font-weight: 500; }
-  .card-body code, .card-body .ic {
-    font-family: var(--mono); font-size: 11px;
-    background: rgba(110,150,235,.06);
-    border: 1px solid rgba(130,165,240,.10);
-    border-radius: 3px; padding: 1px 5px;
-    color: #B9C6E2;
-  }
-  .card-body .warn { color: #E5697A; }
-  .card.placeholder .card-body { color: #525C78; }
-  .card.dim { opacity: .5; border-style: dashed; }
-
-  /* 冲突区 */
-  .conflict {
-    flex: 0 0 auto;
-    border: 1px solid rgba(111,164,245,.26);
-    border-radius: 12px;
-    background:
-      radial-gradient(140% 130% at 0% 0%, rgba(80,130,240,.075), transparent 58%),
-      linear-gradient(180deg, rgba(120,160,240,.03), rgba(120,160,240,.008));
-    padding: 14px 17px 15px;
-    display: none;
-  }
-  .conflict.show { display: block; animation: rise .45s cubic-bezier(.2,.8,.2,1) both; }
-  @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
-
-  .cf-head { display: flex; align-items: center; gap: 10px; }
-  .cf-head .kicker { font-family: var(--mono); font-size: 9.5px; letter-spacing: .22em; color: var(--conf); }
-  .cf-head .rule { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(111,164,245,.35), transparent); }
-  .cf-head .cf-count { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); }
-
-  .cf-body { margin-top: 11px; max-height: 170px; overflow-y: auto; padding-right: 5px; }
-  .cf-body::-webkit-scrollbar { width: 4px; }
-  .cf-body::-webkit-scrollbar-thumb { background: rgba(148,170,220,.14); border-radius: 2px; }
-
-  .cf-item { padding: 9px 0; border-top: 1px solid rgba(148,170,220,.07); }
+  .cf-empty { color: var(--ink-3); font-size: 12px; line-height: 2; text-align: center; padding-top: 22px; }
+  .cf-item { padding: 10px 0 11px; border-top: 1px solid rgba(64,150,255,.12); }
   .cf-item:first-child { border-top: 0; padding-top: 0; }
   .cf-item h5 {
-    font-size: 12.5px; font-weight: 500; color: #DCE4F4; letter-spacing: .03em;
+    font-size: 13px; font-weight: 600; color: #EAF3FF; letter-spacing: .04em;
     display: flex; align-items: baseline; gap: 8px;
   }
-  .cf-item h5 span {
-    font-family: var(--mono); font-size: 9.5px; color: var(--conf); opacity: .9;
-  }
-  .cf-item .cf-txt { margin-top: 5px; font-size: 11.5px; line-height: 1.85; color: #99A5C0; }
+  .cf-item h5 span { font-family: var(--mono); font-size: 10px; color: var(--perf); }
+  .cf-txt { margin-top: 6px; font-size: 12px; line-height: 1.85; color: #9DB6DE; }
 
   .stance { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
   .stance > div {
-    flex: 1 1 200px;
-    font-size: 11px; line-height: 1.75;
-    padding: 8px 11px; border-radius: 7px;
-    color: #A3AEC8;
-    border: 1px solid rgba(148,170,220,.08);
-    background: rgba(120,160,240,.022);
-    border-left-width: 2px;
+    flex: 1 1 200px; font-size: 11.5px; line-height: 1.75;
+    padding: 8px 11px; color: #A9C1E6;
+    border: 1px solid rgba(64,150,255,.16); background: rgba(20,52,110,.35);
+    border-left: 2px solid rgba(64,150,255,.5);
   }
-  .stance b { display: block; font-size: 9px; letter-spacing: .14em; margin-bottom: 4px; font-family: var(--mono); font-weight: 500; }
-  .stance .a { border-left-color: rgba(125,207,255,.6); }
-  .stance .b { border-left-color: rgba(130,170,255,.6); }
-  .stance .a b { color: #7DCFFF; }
-  .stance .b b { color: #82AAFF; }
+  .stance b { display: block; font-family: var(--mono); font-size: 9px; letter-spacing: .14em; margin-bottom: 4px; font-weight: 600; }
+  .stance .a { border-left-color: var(--cyan); }
+  .stance .b { border-left-color: var(--arch); }
+  .stance .a b { color: var(--cyan); text-shadow: 0 0 6px rgba(53,198,255,.5); }
+  .stance .b b { color: var(--arch); }
 
-  .verdict-note {
-    margin-top: 9px; padding-top: 9px;
-    border-top: 1px solid rgba(148,170,220,.07);
-    font-size: 11px; line-height: 1.8; color: #8892AC;
+  .verdict-note { margin-top: 9px; padding-top: 9px; border-top: 1px solid rgba(64,150,255,.12); font-size: 11.5px; line-height: 1.8; color: #86A5D4; }
+  .verdict-note b { color: var(--std); font-weight: 600; }
+
+  /* ================= 右：指标 + 结论 ================= */
+  .col-right { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+
+  .metrics { flex: 0 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .metric {
+    position: relative; padding: 12px 14px 11px;
+    border: 1px solid var(--line-soft);
+    background: linear-gradient(180deg, rgba(20,52,110,.5), rgba(9,28,66,.5));
+    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+    transition: border-color .3s ease, box-shadow .3s ease;
   }
-  .verdict-note b { color: #6FCBB6; font-weight: 500; }
-
-  /* 底部状态 */
-  .footline {
-    flex: 0 0 auto;
-    display: flex; align-items: center; gap: 12px;
-    padding-top: 2px;
-    font-family: var(--mono); font-size: 9.5px; color: #49536B;
-    letter-spacing: .06em;
+  .metric .m-label {
+    font-size: 11px; color: var(--ink-2); letter-spacing: .1em;
+    display: flex; align-items: center; gap: 7px;
   }
-  .footline .sep { width: 2px; height: 2px; border-radius: 50%; background: #384260; }
-  .footline .grow { flex: 1; }
-
-  .empty {
-    border: 1px dashed rgba(148,170,220,.12);
-    border-radius: 11px;
-    padding: 24px 20px;
-    text-align: center;
-    color: #525C78;
-    font-size: 12px;
-    line-height: 1.9;
+  .metric .m-label em { font-family: var(--mono); font-size: 8.5px; font-style: normal; letter-spacing: .14em; color: var(--ink-4); }
+  .metric .m-value {
+    margin-top: 8px; font-size: 19px; font-weight: 600; letter-spacing: .06em;
+    color: var(--ink-4); font-variant-numeric: tabular-nums;
+    display: flex; align-items: center; gap: 8px;
+    transition: color .35s ease, text-shadow .35s ease;
   }
-  .empty b { display: block; color: #8490AC; font-weight: 500; margin-bottom: 4px; letter-spacing: .04em; }
+  .metric .m-value::before { content: ""; width: 6px; height: 6px; transform: rotate(45deg); background: currentColor; box-shadow: 0 0 8px currentColor; flex: 0 0 auto; }
+  .metric .m-bar { margin-top: 10px; height: 2px; background: rgba(64,150,255,.12); overflow: hidden; }
+  .metric .m-bar i { display: block; height: 100%; width: 0; background: var(--c, var(--ink-4)); box-shadow: 0 0 8px var(--c, transparent); transition: width .8s cubic-bezier(.2,.8,.2,1); }
+  .metric.hot { border-color: rgba(255,94,108,.5); box-shadow: 0 0 16px rgba(255,94,108,.14), 0 0 16px rgba(255,94,108,.08) inset; }
+  .metric.warm { border-color: rgba(255,184,77,.45); }
+  .metric.cool { border-color: rgba(53,224,161,.4); }
 
-  /* 进度条 */
-  .progress { display: flex; gap: 3px; }
-  .progress i {
-    width: 20px; height: 1.5px; border-radius: 1px;
-    background: rgba(148,170,220,.12);
-    transition: background .4s ease;
+  .p-verdicts { flex: 1 1 auto; min-height: 0; }
+  .counter { font-family: var(--mono); font-size: 11px; color: var(--cyan); font-variant-numeric: tabular-nums; }
+
+  .vlist {
+    flex: 1 1 auto; min-height: 0; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 9px;
+    padding: 12px 14px;
+    scrollbar-width: thin; scrollbar-color: rgba(64,150,255,.3) transparent;
   }
-  .progress i.on { background: var(--c, var(--accent)); }
+  .vlist::-webkit-scrollbar { width: 5px; }
+  .vlist::-webkit-scrollbar-thumb { background: rgba(64,150,255,.3); border-radius: 3px; }
 
-  @media (max-width: 1180px) {
-    .shell { height: auto; padding: 0 24px 36px; }
-    .main { grid-template-columns: 1fr; }
-    .top-mid { display: none; }
-    .code-area { height: 340px; }
+  .card {
+    border: 1px solid rgba(64,150,255,.14);
+    background: linear-gradient(180deg, rgba(20,52,110,.4), rgba(9,28,66,.35));
+    padding: 12px 14px 13px; position: relative;
+    transition: border-color .35s ease, box-shadow .35s ease;
+  }
+  .card.on { border-color: rgba(64,150,255,.34); box-shadow: 0 0 14px rgba(40,110,255,.12); }
+  .card-head { display: flex; align-items: flex-start; gap: 10px; }
+  .card-idx { font-family: var(--mono); font-size: 9.5px; color: var(--cyan); opacity: .8; padding-top: 3px; }
+  .card-title { font-size: 13.5px; font-weight: 600; letter-spacing: .08em; color: #E7F2FF; }
+  .card-sub { font-family: var(--mono); font-size: 8.5px; letter-spacing: .18em; color: var(--ink-4); margin-top: 3px; text-transform: uppercase; }
+  .sev {
+    margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 600; letter-spacing: .06em;
+    padding: 3px 10px; color: var(--ink-3);
+    border: 1px solid rgba(64,150,255,.2); background: rgba(20,52,110,.4);
+    transition: all .4s ease; white-space: nowrap;
+  }
+  .sev::before { content: ""; width: 4px; height: 4px; transform: rotate(45deg); background: currentColor; box-shadow: 0 0 6px currentColor; }
+  .sev.high { color: #FF5E6C; border-color: rgba(255,94,108,.55); background: rgba(255,94,108,.08); text-shadow: 0 0 8px rgba(255,94,108,.5); }
+  .sev.mid  { color: #FFB84D; border-color: rgba(255,184,77,.5); background: rgba(255,184,77,.08); text-shadow: 0 0 8px rgba(255,184,77,.4); }
+  .sev.low  { color: #35E0A1; border-color: rgba(53,224,161,.5); background: rgba(53,224,161,.08); text-shadow: 0 0 8px rgba(53,224,161,.4); }
+  .sev.fail { color: #7E93BC; }
+
+  .card-body { margin-top: 10px; font-size: 12px; line-height: 1.85; color: #9DB6DE; }
+  .card-body p { margin-bottom: 7px; }
+  .card-body p:last-child { margin-bottom: 0; }
+  .card-body .lbl { color: #CFE2FF; font-weight: 500; }
+  .card-body code, .card-body .ic {
+    font-family: var(--mono); font-size: 10.5px;
+    background: rgba(40,110,240,.14); border: 1px solid rgba(70,150,255,.28);
+    border-radius: 3px; padding: 1px 5px; color: #BFDBFF;
+  }
+  .card-body .warn { color: #FF5E6C; }
+  .card.placeholder .card-body { color: var(--ink-4); }
+  .card.dim { opacity: .55; }
+
+  .footline { flex: 0 0 auto; font-family: var(--mono); font-size: 10px; color: var(--ink-4); letter-spacing: .08em; padding: 0 2px; }
+
+  /* ================= 底栏 ================= */
+  .nav {
+    flex: 0 0 44px;
+    display: flex; align-items: stretch; gap: 4px;
+    margin: 0 -22px; padding: 0 34px;
+    border-top: 1px solid rgba(64,150,255,.25);
+    background: linear-gradient(180deg, rgba(14,40,92,.55), rgba(6,18,44,.85));
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 22px; font-size: 12.5px; letter-spacing: .14em;
+    color: var(--ink-3); cursor: pointer; position: relative;
+    border-bottom: 2px solid transparent;
+    transition: all .2s ease; user-select: none;
+  }
+  .nav-item i { width: 5px; height: 5px; transform: rotate(45deg); background: currentColor; opacity: .6; }
+  .nav-item:hover { color: var(--ink-2); }
+  .nav-item.on { color: #EAF5FF; border-bottom-color: var(--cyan); text-shadow: 0 0 10px rgba(53,198,255,.5); }
+  .nav-item.on i { background: var(--cyan); opacity: 1; box-shadow: 0 0 8px var(--cyan); }
+  .nav-right { margin-left: auto; display: flex; align-items: center; gap: 18px; font-family: var(--mono); font-size: 10px; color: var(--ink-4); letter-spacing: .1em; }
+  .nav-right b { color: var(--std); font-weight: 500; }
+
+  /* ================= 响应式 ================= */
+  @media (max-width: 1220px) {
+    body { overflow: auto; }
+    .shell { height: auto; }
+    .grid { grid-template-columns: 1fr; }
+    .code-area { height: 320px; }
+    .arena-wrap { height: 340px; }
     .vlist { overflow: visible; }
-    .col-right { min-height: auto; }
+    .hd-deco { width: 60px; }
   }
-
   @media (max-width: 640px) {
-    .shell { padding: 0 16px 30px; }
+    .shell { padding: 10px 12px 0; }
+    .hd-title h1 { font-size: 20px; }
+    .hd-deco { display: none; }
     .metrics { grid-template-columns: 1fr 1fr; }
-    .brand-txt p { display: none; }
+    .nav-right span:first-child { display: none; }
   }
-
   @media (prefers-reduced-motion: reduce) {
     * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
   }
 </style>
 </head>
-
 <body>
-<div class="bg">
-  <div class="aurora a1"></div>
-  <div class="aurora a2"></div>
-  <div class="aurora a3"></div>
-  <div class="grid-lines"></div>
-  <div class="noise"></div>
-</div>
+  <div class="bg"><div class="grad"></div><div class="gridlines"></div><div class="sweepline"></div><div class="noise"></div></div>
 
-<div class="shell">
-  <header class="top">
-    <div class="brand">
-      <div class="mark">辩</div>
-      <div class="brand-txt">
-        <h1>辩码场</h1>
-        <p>Code Review Arena</p>
+  <div class="shell">
+    <!-- 顶栏 -->
+    <header class="hd">
+      <div class="hd-side"><span>CODE REVIEW ARENA</span><span>·</span><span id="clockDate">--------</span><span id="clockWeek"></span></div>
+      <div class="hd-title">
+        <div class="hd-title-row"><span class="hd-deco"></span><h1>辩 码 场</h1><span class="hd-deco r"></span></div>
+        <p>多维代码权衡评审平台 · 让冲突先上台</p>
       </div>
-    </div>
-
-    <div class="top-mid">
-      <span class="tag">四路并行</span>
-      <span class="tag">冲突可见</span>
-      <span class="tag">不输出标准答案</span>
-    </div>
-
-    <div class="top-right">
-      <div class="progress" id="progress">
-        <i data-k="security"></i><i data-k="performance"></i><i data-k="architecture"></i><i data-k="standard"></i>
+      <div class="hd-side r">
+        <div class="state-pill ready" id="statePill"><i class="led"></i><span id="stateText">待命</span></div>
+        <div class="hd-clock" id="clockTime">--:--:--</div>
       </div>
-      <div class="state-pill ready" id="statePill"><span class="led"></span><span id="stateText">待命</span></div>
-    </div>
-  </header>
+    </header>
 
-  <main class="main">
-    <!-- 左：代码 -->
-    <div class="col-left">
-      <section class="panel editor">
+    <!-- 主体 -->
+    <main class="grid">
+      <!-- 左：代码提交台 -->
+      <section class="panel"><i class="ck1"></i>
+        <div class="p-hd"><span class="p-tag">01</span><h2>代码提交台</h2><span class="p-en">SOURCE INPUT</span></div>
+        <div class="cases" id="caseChips"></div>
         <div class="tabbar">
-          <div class="tab"><i></i>case_conflict.py</div>
-          <div class="lang">PYTHON · UTF-8</div>
+          <div class="tab"><i></i><span id="tabName">sql_inject_01.py</span></div>
+          <span class="lang">PYTHON · UTF-8</span>
         </div>
-
         <div class="code-area">
           <div class="gutter" id="gutter"></div>
           <div class="code-layer">
-            <pre class="hlayer" id="hlayer" aria-hidden="true"></pre>
-            <textarea id="codeInput" spellcheck="false" wrap="off"></textarea>
+            <pre class="hlayer" id="hlayer"></pre>
+            <textarea id="codeInput" spellcheck="false" autocomplete="off"></textarea>
+          </div>
+        </div>
+        <div class="editor-foot">
+          <span class="file-meta"><b id="lineCount">—</b> 行 · <b id="charCount">—</b> 字符</span>
+          <button class="run" id="runBtn">启动评审 <kbd>Ctrl ↵</kbd></button>
+        </div>
+      </section>
+
+      <!-- 中：评审态势 + 冲突矩阵 -->
+      <section class="col-mid">
+        <div class="panel p-arena"><i class="ck1"></i>
+          <div class="p-hd">
+            <span class="p-tag">02</span><h2>评审态势</h2><span class="p-en">LIVE VIEW</span>
+            <div class="right"><div class="progress" id="progress"><i data-k="security"></i><i data-k="performance"></i><i data-k="architecture"></i><i data-k="standard"></i></div></div>
+          </div>
+          <div class="arena-wrap">
+            <svg viewBox="0 0 640 420" preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+                  <feGaussianBlur stdDeviation="3" result="b"/>
+                  <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+
+              <!-- 装饰环 -->
+              <g opacity=".5">
+                <circle cx="320" cy="210" r="118" fill="none" stroke="rgba(64,150,255,.14)" stroke-width="1" class="ring-spin" stroke-dasharray="40 14 8 14"/>
+                <circle cx="320" cy="210" r="138" fill="none" stroke="rgba(64,150,255,.10)" stroke-width="1" class="ring-spin2" stroke-dasharray="4 10"/>
+                <line x1="320" y1="52" x2="320" y2="88" stroke="rgba(64,150,255,.16)"/>
+                <line x1="320" y1="332" x2="320" y2="368" stroke="rgba(64,150,255,.16)"/>
+                <line x1="146" y1="210" x2="196" y2="210" stroke="rgba(64,150,255,.16)"/>
+                <line x1="444" y1="210" x2="494" y2="210" stroke="rgba(64,150,255,.16)"/>
+              </g>
+
+              <!-- 光束 -->
+              <path id="beam-security"     class="beam" d="M 128 122 Q 200 160 276 190"/>
+              <path id="beam-performance"  class="beam" d="M 512 122 Q 440 160 364 190"/>
+              <path id="beam-architecture" class="beam" d="M 128 298 Q 200 262 276 232"/>
+              <path id="beam-standard"     class="beam" d="M 512 298 Q 440 262 364 232"/>
+
+              <!-- 中央核心 -->
+              <g id="hub">
+                <polygon class="hub-core" points="320,166 366,188 366,232 320,254 274,232 274,188"/>
+                <text class="hub-title" x="320" y="205">冲突消解</text>
+                <text class="hub-sub" x="320" y="222">CONFLICT CORE</text>
+                <text class="hub-status" x="320" y="290" id="hubStatus">待命 · 等待提交代码</text>
+              </g>
+
+              <!-- 四节点 -->
+              <g class="node" id="node-security" style="--c:var(--sec)">
+                <rect class="node-box" x="46" y="66" width="164" height="62"/>
+                <text class="node-idx" x="60" y="84">01</text>
+                <text class="node-name" x="82" y="88">安全评审</text>
+                <text class="node-sub" x="82" y="102">SECURITY</text>
+                <text class="node-state" x="60" y="120" id="ns-security">待命</text>
+                <text class="node-level" x="196" y="120" text-anchor="end" id="nl-security" fill="#FF5E6C"></text>
+              </g>
+              <g class="node" id="node-performance" style="--c:var(--perf)">
+                <rect class="node-box" x="430" y="66" width="164" height="62"/>
+                <text class="node-idx" x="444" y="84">02</text>
+                <text class="node-name" x="466" y="88">性能评审</text>
+                <text class="node-sub" x="466" y="102">PERFORMANCE</text>
+                <text class="node-state" x="444" y="120" id="ns-performance">待命</text>
+                <text class="node-level" x="580" y="120" text-anchor="end" id="nl-performance" fill="#FFB84D"></text>
+              </g>
+              <g class="node" id="node-architecture" style="--c:var(--arch)">
+                <rect class="node-box" x="46" y="292" width="164" height="62"/>
+                <text class="node-idx" x="60" y="310">03</text>
+                <text class="node-name" x="82" y="314">架构评审</text>
+                <text class="node-sub" x="82" y="328">ARCHITECTURE</text>
+                <text class="node-state" x="60" y="346" id="ns-architecture">待命</text>
+                <text class="node-level" x="196" y="346" text-anchor="end" id="nl-architecture" fill="#5EA0FF"></text>
+              </g>
+              <g class="node" id="node-standard" style="--c:var(--std)">
+                <rect class="node-box" x="430" y="292" width="164" height="62"/>
+                <text class="node-idx" x="444" y="310">04</text>
+                <text class="node-name" x="466" y="314">规范评审</text>
+                <text class="node-sub" x="466" y="328">CONVENTION</text>
+                <text class="node-state" x="444" y="346" id="ns-standard">待命</text>
+                <text class="node-level" x="580" y="346" text-anchor="end" id="nl-standard" fill="#35E0A1"></text>
+              </g>
+            </svg>
           </div>
         </div>
 
-        <div class="editor-foot">
-          <div class="file-meta"><b id="lineCount">0</b> 行 · <b id="charCount">0</b> 字符 · 学生提交</div>
-          <button class="run" id="runBtn">开始评审 <kbd>⌘ ↵</kbd></button>
+        <div class="panel p-conflict" id="conflictBox"><i class="ck1"></i>
+          <div class="p-hd">
+            <span class="p-tag">03</span><h2>冲突消解矩阵</h2><span class="p-en">CONFLICT MATRIX</span>
+            <div class="right"><span class="cf-count" id="cfCount">— 项冲突</span></div>
+          </div>
+          <div class="cf-body" id="cfBody">
+            <div class="cf-empty">四路评审结论收敛后，互斥的主张会在这里对质。<br>选择左侧用例或粘贴代码，点击「启动评审」。</div>
+          </div>
         </div>
       </section>
-    </div>
 
-    <!-- 右：结论 -->
-    <div class="col-right">
-      <div class="metrics">
-        <div class="metric" id="metric-security" style="--c:var(--sec)">
-          <div class="m-label">安全 <em>SEC</em></div>
-          <div class="m-value">—</div>
-          <div class="m-bar"><i></i></div>
+      <!-- 右：指标 + 结论流 -->
+      <section class="col-right">
+        <div class="metrics">
+          <div class="metric" id="metric-security" style="--c:var(--sec)">
+            <div class="m-label">安全风险 <em>SEC</em></div>
+            <div class="m-value">—</div>
+            <div class="m-bar"><i></i></div>
+          </div>
+          <div class="metric" id="metric-performance" style="--c:var(--perf)">
+            <div class="m-label">性能影响 <em>PERF</em></div>
+            <div class="m-value">—</div>
+            <div class="m-bar"><i></i></div>
+          </div>
+          <div class="metric" id="metric-architecture" style="--c:var(--arch)">
+            <div class="m-label">架构耦合 <em>ARCH</em></div>
+            <div class="m-value">—</div>
+            <div class="m-bar"><i></i></div>
+          </div>
+          <div class="metric" id="metric-standard" style="--c:var(--std)">
+            <div class="m-label">规范健壮性 <em>STD</em></div>
+            <div class="m-value">—</div>
+            <div class="m-bar"><i></i></div>
+          </div>
         </div>
-        <div class="metric" id="metric-performance" style="--c:var(--perf)">
-          <div class="m-label">性能 <em>PERF</em></div>
-          <div class="m-value">—</div>
-          <div class="m-bar"><i></i></div>
+
+        <div class="panel p-verdicts"><i class="ck1"></i>
+          <div class="p-hd">
+            <span class="p-tag">04</span><h2>评审结论流</h2><span class="p-en">VERDICTS</span>
+            <div class="right"><span class="counter" id="counter">0 / 4</span></div>
+          </div>
+          <div class="vlist" id="vlist"></div>
         </div>
-        <div class="metric" id="metric-architecture" style="--c:var(--arch)">
-          <div class="m-label">架构 <em>ARCH</em></div>
-          <div class="m-value">—</div>
-          <div class="m-bar"><i></i></div>
-        </div>
-        <div class="metric" id="metric-standard" style="--c:var(--std)">
-          <div class="m-label">规范 <em>STD</em></div>
-          <div class="m-value">—</div>
-          <div class="m-bar"><i></i></div>
-        </div>
+
+        <div class="footline" id="footNote">系统就绪 · 选择用例或直接粘贴代码</div>
+      </section>
+    </main>
+
+    <!-- 底栏 -->
+    <footer class="nav">
+      <div class="nav-item on"><i></i>评审态势</div>
+      <div class="nav-item"><i></i>冲突矩阵</div>
+      <div class="nav-item"><i></i>用例库</div>
+      <div class="nav-item"><i></i>教学场景</div>
+      <div class="nav-right">
+        <span id="footNote2">评审引擎 <b>在线</b></span>
+        <span>四路并行 · 冲突消解</span>
+        <span>V2.0</span>
       </div>
-
-      <div class="vhead">
-        <span class="kicker">Verdicts</span>
-        <span class="rule"></span>
-        <span class="counter" id="counter">0 / 4</span>
-      </div>
-
-      <div class="vlist" id="vlist"></div>
-
-      <div class="conflict" id="conflictBox">
-        <div class="cf-head">
-          <span class="kicker">CONFLICT MATRIX</span>
-          <span class="rule"></span>
-          <span class="cf-count" id="cfCount"></span>
-        </div>
-        <div class="cf-body" id="cfBody"></div>
-      </div>
-
-      <div class="footline">
-        <span id="footNote">等待评审</span>
-        <span class="sep"></span>
-        <span class="grow"></span>
-        <span>辩码场 · 多 Skill 冲突消解</span>
-      </div>
-    </div>
-  </main>
-</div>
+    </footer>
+  </div>
 
 <script>
-
 /* ============================================================
    基础配置
    ============================================================ */
@@ -641,17 +658,116 @@ const SEV_TEXT = {
 
 const LEVEL_W = { high: 100, mid: 62, low: 30 };
 
-/* 内置样例：节选自 codearts_proof/run_log 的真实评审记录
+/* 内置样例：节选自 codearts_proof/run_log 与 test_report.md 的真实评审记录
    —— 静态托管（如 GitHub Pages）时也能完整演示 */
-const SAMPLE = {
-  skills: {
-    security: { text: "LEVEL: 高\nS1｜SQL 注入（Critical，CWE-89）。位置：query = \"SELECT * FROM users WHERE name = '\" + username + \"'\"。username 被原样拼入 SQL，任何调用方可控的输入都能改写语句结构；无输入转义、无白名单、无参数化。修复：cursor.execute(\"SELECT id, name, email FROM users WHERE name = ?\", (username,))。\n\nS2｜SELECT * 造成敏感字段过度暴露（High，CWE-213）。按列名返回全部字段，密码哈希、手机号等会无差别交到调用方手里；与 S1 叠加时注入一次即可拖走整表所有列。修复：显式列出业务所需列。\n\nS3｜资源未释放（Medium，CWE-404）。conn 与 cursor 均无 close()，异常路径下连接必然泄漏，高频调用会耗尽文件句柄。修复：用 contextlib.closing 包住连接（sqlite3.Connection.__exit__ 只提交事务，不关闭连接）。\n\nS5｜缺少授权边界（High，CWE-862）。get_user 接受任意用户名，若上层直接透传 ?name= 即构成水平越权，可枚举他人资料。修复：查询条件绑定当前会话主体，敏感字段脱敏。\n\n结论：S1 是致命缺陷，不能靠\"调用方保证输入安全\"规避——这个函数本身就是边界，必须自行落实参数化。", delay: 1.2 },
-    performance: { text: "LEVEL: 中\n【性能评审结论】性能等级：一般\n\n位置：conn = sqlite3.connect('test.db')。问题：每次调用都新建连接、函数返回前即销毁。损耗原因：连接建立包含文件打开、页缓存初始化、编译选项解析等固定开销，且与结果集大小无关；高频调用时按次数线性放大，新连接也无法复用语句缓存。建议：由上层复用连接池，或至少同批查询共用一个连接对象。\n\n位置：SELECT *。问题：读取全部列。损耗原因：多余列的读取、类型转换与对象构造都有成本，单行开销随列数线性增长，结果集越大 I/O 与内存浪费越显著。建议：改为显式列名。\n\n位置：WHERE 后的过滤条件。问题：name 列若无索引，每次查询退化为全表扫描，代价随表规模线性上升。建议：对高频过滤列建索引，并在注入修复后仍保持参数化以免索引失效。", delay: 1.6 },
-    architecture: { text: "LEVEL: 高\n【架构评审结论】架构等级：有缺陷\n\n位置：get_user 函数整体（connect → cursor → SQL 构造 → execute → fetchall → close）。问题：连接建立、查询构造、语句执行、结果映射、资源回收五类职责全部内聚在一个函数内，未形成任何端口 / 适配器或仓储边界。架构影响：模块划分缺失，持久化细节与查询入口直接重叠，上层只能依赖该具体实现，无法替换存储，也无法在统一位置治理查询策略与事务语义。建议：抽出 UserReader 端口与 SQLiteUserReader 适配器，get_user 退化为端口上的一个方法。\n\n位置：conn = sqlite3.connect('test.db')。问题：具体驱动与连接字符串硬编码在业务函数体内。架构影响：违反依赖倒置，高层反向依赖底层基础设施细节；环境切换、测试替身、多数据源扩展都必须改业务代码。建议：连接由组合根（配置层 / 工厂 / 构造注入）提供，仓储只消费抽象连接。", delay: 1.4 },
-    standard: { text: "LEVEL: 中\n【规范评审结论】规范等级：较多问题\n\n位置：query = \"SELECT * FROM users WHERE... '\"。问题：SQL 文本残缺（引号未闭合、条件未写完），并非可执行代码，且未以注释或 TODO 标明是示意片段。影响：读者无法判断原意，残缺文本混在可运行代码中会误导维护者。建议：补全语句；若确为示意，改为注释块或独立示例文件并标注用途。\n\n位置：def get_user(username)。问题：公共函数缺 docstring，参数与返回值无类型注解。影响：调用方只能靠读实现推断语义，签名不自解释，静态检查与 IDE 提示失效。建议：补充 docstring（用途、参数、返回、异常）并加注解 def get_user(username: str) -> list[tuple]。\n\n位置：resp = cursor.fetchall() 之后的资源管理。问题：close() 未放在 finally 或上下文管理器中。建议：改为 with closing(...) 结构，保证异常路径同样释放。", delay: 1.0 }
+const CASES = [
+  {
+    file: "sql_inject_01.py", tag: "①", name: "注入+结构缺陷",
+    code: `import sqlite3
+
+def get_user(username):
+    conn = sqlite3.connect('test.db')
+    cursor = conn.cursor()
+    query = "SELECT * FROM users WHERE name = '" + username + "'"
+    cursor.execute(query)
+    resp = cursor.fetchall()
+    conn.close()
+    return resp
+
+name = input("请输入用户名：")
+rows = get_user(name)
+print(rows)`,
+    sample: {
+      skills: {
+        security: { text: "LEVEL: 高\nS1｜SQL 注入（Critical，CWE-89）。位置：query = \"SELECT * FROM users WHERE name = '\" + username + \"'\"。username 被原样拼入 SQL，任何调用方可控的输入都能改写语句结构；无输入转义、无白名单、无参数化。修复：cursor.execute(\"SELECT id, name, email FROM users WHERE name = ?\", (username,))。\n\nS2｜SELECT * 造成敏感字段过度暴露（High，CWE-213）。按列名返回全部字段，密码哈希、手机号等会无差别交到调用方手里；与 S1 叠加时注入一次即可拖走整表所有列。修复：显式列出业务所需列。\n\nS3｜资源未释放（Medium，CWE-404）。conn 与 cursor 均无 close()，异常路径下连接必然泄漏，高频调用会耗尽文件句柄。修复：用 contextlib.closing 包住连接（sqlite3.Connection.__exit__ 只提交事务，不关闭连接）。\n\nS5｜缺少授权边界（High，CWE-862）。get_user 接受任意用户名，若上层直接透传 ?name= 即构成水平越权，可枚举他人资料。修复：查询条件绑定当前会话主体，敏感字段脱敏。\n\n结论：S1 是致命缺陷，不能靠\"调用方保证输入安全\"规避——这个函数本身就是边界，必须自行落实参数化。", delay: 1.2 },
+        performance: { text: "LEVEL: 中\n【性能评审结论】性能等级：一般\n\n位置：conn = sqlite3.connect('test.db')。问题：每次调用都新建连接、函数返回前即销毁。损耗原因：连接建立包含文件打开、页缓存初始化、编译选项解析等固定开销，且与结果集大小无关；高频调用时按次数线性放大，新连接也无法复用语句缓存。建议：由上层复用连接池，或至少同批查询共用一个连接对象。\n\n位置：SELECT *。问题：读取全部列。损耗原因：多余列的读取、类型转换与对象构造都有成本，单行开销随列数线性增长，结果集越大 I/O 与内存浪费越显著。建议：改为显式列名。\n\n位置：WHERE 后的过滤条件。问题：name 列若无索引，每次查询退化为全表扫描，代价随表规模线性上升。建议：对高频过滤列建索引，并在注入修复后仍保持参数化以免索引失效。", delay: 1.6 },
+        architecture: { text: "LEVEL: 高\n【架构评审结论】架构等级：有缺陷\n\n位置：get_user 函数整体（connect → cursor → SQL 构造 → execute → fetchall → close）。问题：连接建立、查询构造、语句执行、结果映射、资源回收五类职责全部内聚在一个函数内，未形成任何端口 / 适配器或仓储边界。架构影响：模块划分缺失，持久化细节与查询入口直接重叠，上层只能依赖该具体实现，无法替换存储，也无法在统一位置治理查询策略与事务语义。建议：抽出 UserReader 端口与 SQLiteUserReader 适配器，get_user 退化为端口上的一个方法。\n\n位置：conn = sqlite3.connect('test.db')。问题：具体驱动与连接字符串硬编码在业务函数体内。架构影响：违反依赖倒置，高层反向依赖底层基础设施细节；环境切换、测试替身、多数据源扩展都必须改业务代码。建议：连接由组合根（配置层 / 工厂 / 构造注入）提供，仓储只消费抽象连接。", delay: 1.4 },
+        standard: { text: "LEVEL: 中\n【规范评审结论】规范等级：较多问题\n\n位置：query = \"SELECT * FROM users WHERE... '\"。问题：SQL 文本残缺（引号未闭合、条件未写完），并非可执行代码，且未以注释或 TODO 标明是示意片段。影响：读者无法判断原意，残缺文本混在可运行代码中会误导维护者。建议：补全语句；若确为示意，改为注释块或独立示例文件并标注用途。\n\n位置：def get_user(username)。问题：公共函数缺 docstring，参数与返回值无类型注解。影响：调用方只能靠读实现推断语义，签名不自解释，静态检查与 IDE 提示失效。建议：补充 docstring（用途、参数、返回、异常）并加注解 def get_user(username: str) -> list[tuple]。\n\n位置：resp = cursor.fetchall() 之后的资源管理。问题：close() 未放在 finally 或上下文管理器中。建议：改为 with closing(...) 结构，保证异常路径同样释放。", delay: 1.0 }
+      },
+      conflict: { text: "⚖️【权衡冲突项（核心）】\n\n冲突一｜命名语义 vs 实现语义：函数名 get_user 承诺返回单个用户实体，实现用 fetchall() 返回集合，两者互相抵消。主张 A（语义一致优先）：按实际行为改名为 find_users_by_name；主张 B（契约兼容优先）：保留 get_user 名称，改实现为 fetchone 返回单条。权衡说明：A 不破坏数据形态但破坏调用方符号；B 保持符号却引入\"name 唯一\"的强假设，一旦允许重名即产生行为歧义，二者无法同时满足。\n\n冲突二｜安全修复 vs 性能开销：安全评审要求参数化查询并显式列名，性能评审同时要求复用连接与建索引。权衡说明：参数化本身几乎无额外成本，属于双赢项；但\"复用连接\"与\"函数自包含、返回前关闭\"直接冲突——连接池化后函数不再自己持有生命周期，需把连接边界上移到应用层，这会改变架构评审关心的依赖方向。\n\n冲突三｜资源释放时机 vs 返回值生命周期：函数内 close() 后返回，只有在返回值已完全物化时成立（当前靠 fetchall 恰好满足）；一旦改为返回游标或迭代器，该隐性契约立刻失效。主张 A：保持\"先关闭再返回\"，把自包含性放在首位；主张 B：把释放责任交给调用方，换取更灵活的使用方式。\n\n冲突四｜教学示意 vs 可运行代码：规范评审判定 query 文本残缺、不可执行。主张 A 补齐语句使实现与声明一致；主张 B 维持片段形态、视为示意。权衡说明：A 获得可运行实现但需确定列选取范围；B 保留教学示意性，但任何基于该片段的行为推断都不可靠。\n\n📌【综合建议（教学导向）】\n方案 1｜最小改动：只补齐 query，其余不动。代价：命名与返回基数的矛盾保留，误读风险持续。\n方案 2｜改名保留列表：find_users_by_name + 完整参数化 SQL + 连接池。代价：调用方符号需同步修改，但语义、返回值、调用预期三者自洽，且不依赖\"name 唯一\"这一未声明前提——四个维度中冲突最少，推荐作为课堂讨论的\"较优解\"。\n方案 3｜保名返回单条：get_user + fetchone。代价：调用方零改动，但把\"name 唯一\"固化为隐式契约。\n方案 4｜显式化契约：函数名、返回类型、列范围、资源归属四者同时声明。代价：改动面最大，但唯一能消除\"声明与实现互相矛盾\"根因。\n\n注：安全维度（S1 注入）属不可妥协项，任何方案都必须先修；真正的课堂争点是\"改名还是改实现\"，而不是\"要不要修注入\"。", delay: 1.8 }
+    }
   },
-  conflict: { text: "⚖️【权衡冲突项（核心）】\n\n冲突一｜命名语义 vs 实现语义：函数名 get_user 承诺返回单个用户实体，实现用 fetchall() 返回集合，两者互相抵消。主张 A（语义一致优先）：按实际行为改名为 find_users_by_name；主张 B（契约兼容优先）：保留 get_user 名称，改实现为 fetchone 返回单条。权衡说明：A 不破坏数据形态但破坏调用方符号；B 保持符号却引入\"name 唯一\"的强假设，一旦允许重名即产生行为歧义，二者无法同时满足。\n\n冲突二｜安全修复 vs 性能开销：安全评审要求参数化查询并显式列名，性能评审同时要求复用连接与建索引。权衡说明：参数化本身几乎无额外成本，属于双赢项；但\"复用连接\"与\"函数自包含、返回前关闭\"直接冲突——连接池化后函数不再自己持有生命周期，需把连接边界上移到应用层，这会改变架构评审关心的依赖方向。\n\n冲突三｜资源释放时机 vs 返回值生命周期：函数内 close() 后返回，只有在返回值已完全物化时成立（当前靠 fetchall 恰好满足）；一旦改为返回游标或迭代器，该隐性契约立刻失效。主张 A：保持\"先关闭再返回\"，把自包含性放在首位；主张 B：把释放责任交给调用方，换取更灵活的使用方式。\n\n冲突四｜教学示意 vs 可运行代码：规范评审判定 query 文本残缺、不可执行。主张 A 补齐语句使实现与声明一致；主张 B 维持片段形态、视为示意。权衡说明：A 获得可运行实现但需确定列选取范围；B 保留教学示意性，但任何基于该片段的行为推断都不可靠。\n\n📌【综合建议（教学导向）】\n方案 1｜最小改动：只补齐 query，其余不动。代价：命名与返回基数的矛盾保留，误读风险持续。\n方案 2｜改名保留列表：find_users_by_name + 完整参数化 SQL + 连接池。代价：调用方符号需同步修改，但语义、返回值、调用预期三者自洽，且不依赖\"name 唯一\"这一未声明前提——四个维度中冲突最少，推荐作为课堂讨论的\"较优解\"。\n方案 3｜保名返回单条：get_user + fetchone。代价：调用方零改动，但把\"name 唯一\"固化为隐式契约。\n方案 4｜显式化契约：函数名、返回类型、列范围、资源归属四者同时声明。代价：改动面最大，但唯一能消除\"声明与实现互相矛盾\"根因。\n\n注：安全维度（S1 注入）属不可妥协项，任何方案都必须先修；真正的课堂争点是\"改名还是改实现\"，而不是\"要不要修注入\"。", delay: 1.8 }
-};
+  {
+    file: "case_conflict.py", tag: "②", name: "权衡冲突·核心",
+    code: `import sqlite3
+
+
+def fetch_user(username):
+    conn = sqlite3.connect("test.db")
+    cursor = conn.cursor()
+    cursor.execute("select * from user where name = ?", (username,))
+    data = cursor.fetchall()
+    conn.close()
+    return data
+
+
+def main():
+    for i in range(100):
+        # 循环里反复开关数据库连接，安全上没问题，性能上有隐患
+        print(fetch_user("user" + str(i)))
+
+
+if __name__ == "__main__":
+    main()`,
+    sample: {
+      skills: {
+        security: { text: "LEVEL: 低\n【安全评审结论】位置：cursor.execute(\"select * from user where name = ?\", (username,))。查询使用参数化绑定（占位符传参），未发现注入、越权或敏感信息暴露风险。对比注入样例，本用例安全维度不报高危。结论：安全通过，无需修改。", delay: 1.0 },
+        performance: { text: "LEVEL: 高\n【性能评审结论】性能等级：开销大\n\n位置：conn = sqlite3.connect(\"test.db\")（fetch_user 函数内）。问题：每次调用新建连接、返回前关闭，main 中循环 100 次即产生 100 次连接建立与销毁。损耗原因：连接建立含文件打开、页缓存初始化等固定开销，与结果集大小无关；高频调用时按次数线性放大。建议：连接提升至 main() 层建立一次、循环内复用，或引入连接池。\n\n位置：SELECT *（无列裁剪）。问题：全列读取带来多余的类型转换与对象构造成本。建议：显式列出业务所需列。", delay: 1.5 },
+        architecture: { text: "LEVEL: 中\n【架构评审结论】架构等级：有缺陷\n\n位置：fetch_user 函数整体。问题：连接管理、查询构造、资源回收内聚于单一函数，持久化细节未隔离；main 直接依赖具体实现，无法替换存储或做单元测试。建议：抽出 DAO 层，连接由工厂注入，换取可测试与可替换。", delay: 1.3 },
+        standard: { text: "LEVEL: 低\n【规范评审结论】SQL 使用参数化写法，命名清晰，循环内注释说明了设计意图，整体较规范。建议：补充 docstring 与类型注解；资源管理改为 with closing(...) 结构，异常路径更稳妥。", delay: 1.0 }
+      },
+      conflict: { text: "⚖️【权衡冲突项（核心）】\n\n冲突一｜安全无虞 vs 性能隐患：安全评审判定参数化查询无高危，性能评审判定 100 次连接新建开销线性放大——两个结论同时成立，构成真实工程张力。主张 A（安全视角）：当前写法无安全缺陷，保持函数自包含、返回前关闭连接；主张 B（性能视角）：连接应提升到 main() 层建立一次、循环内复用。权衡说明：A 保持资源生命周期清晰、异常隔离好；B 换取显著性能改善，但连接复用后异常状态污染无法隔离，需额外增加连接有效性检查。\n\n冲突二｜函数自包含 vs 连接复用：性能优化要求把连接边界上移，会改变函数\"自己开关连接\"的自包含契约。主张 A（自包含优先）：fetch_user 保持现状，代价是循环内 100 次连接开销原样保留；主张 B（复用优先）：连接复用 + 调用方管理连接状态，代价是调用复杂度上升。\n\n📌【综合建议（教学导向）】\n方案 1｜维持现状 + 安全加固：保留每次新建/关闭连接。代价：循环内 100 次连接的性能损耗原样保留。\n方案 2｜性能优先（连接复用）：连接提升到 main() 层建立一次、循环内复用。代价：异常后连接状态污染、无法隔离，安全侧需额外增加连接有效性检查。\n方案 3｜架构优先（DAO 层）：抽出 DAO 层、连接由工厂注入，换取可测试与可替换。代价：引入分层与间接性。\n方案 4｜分阶段演进（推荐教学对照）：先解决安全与资源泄漏，再合并循环复用连接，展示真实项目的演进路径。代价：需要两步改动。\n\n注：同一段代码，安全视角说\"没问题\"，性能视角说\"有隐患\"，两种说法都成立——不存在唯一标准答案，取舍取决于场景。这正是本平台要摆上台面的东西。", delay: 1.8 }
+    }
+  },
+  {
+    file: "case_simple_bug.py", tag: "③", name: "单点漏洞",
+    code: `import sqlite3
+
+
+def query_user(username):
+    conn = sqlite3.connect("test.db")
+    cursor = conn.cursor()
+    sql = "select * from user where name = '" + username + "'"
+    cursor.execute(sql)
+    return cursor.fetchall()
+
+
+name = input("请输入用户名: ")
+print(query_user(name))`,
+    sample: {
+      skills: {
+        security: { text: "LEVEL: 高\nS1｜SQL 注入（Critical，CWE-89）。位置：sql = \"select * from user where name = '\" + username + \"'\"。外部输入直接拼接进 SQL 文本，可构造任意语句拖走整表。修复：cursor.execute(\"select id, name from user where name = ?\", (username,))。\n\nS2｜连接未关闭（High，CWE-404）。函数任何路径都没有 close()，异常时连接必然泄漏。修复：with closing(sqlite3.connect(\"test.db\")) as conn: 包住查询。", delay: 1.1 },
+        performance: { text: "LEVEL: 中\n【性能评审结论】位置：cursor.execute(sql)。问题：name 列无索引时全表扫描，select * 无上限结果集，代价随表规模与列数增长。建议：显式列名 + 高频过滤列建索引；单次调用可接受，规模化劣化。", delay: 1.5 },
+        architecture: { text: "LEVEL: 中\n【架构评审结论】位置：query_user 整体。问题：持久化细节直接内嵌业务函数，连接生命周期与查询逻辑耦合，无仓储边界，测试需真实数据库。建议：抽出数据访问层，连接由上层注入。", delay: 1.3 },
+        standard: { text: "LEVEL: 中\n【规范评审结论】问题：SQL 字符串拼接写法可读性差且危险；函数缺 docstring 与类型注解；连接未在 finally 中关闭。建议：改参数化写法、补注解、用上下文管理器管理资源。", delay: 1.0 }
+      },
+      conflict: { text: "⚖️【权衡冲突项】\n\n冲突一｜修复优先级 vs 优化组合：修复注入引入参数化后，与\"语句缓存复用、列裁剪\"等性能优化的组合方式存在次级取舍。主张 A（先修漏洞）：立即参数化，性能优化随后；主张 B（一次到位）：重构数据访问层时统一处理注入与优化。权衡说明：A 改动最小、风险收敛快；B 避免二次返工但引入更大变更面。\n\n📌【综合建议（教学导向）】\n方案 1｜最小修复：参数化 + 补 close()。代价：架构与规范问题保留。\n方案 2｜修复 + 规范同步：参数化 + with closing + 注解。代价：改动适中，遗留架构问题（推荐课堂起步）。\n方案 3｜整体重构：抽数据访问层，注入、资源、可测试性一次解决。代价：变更面最大。\n\n注：注入修复属不可妥协项，分歧只在实施顺序与范围。", delay: 1.7 }
+    }
+  },
+  {
+    file: "case_normal.py", tag: "④", name: "干净代码",
+    code: `def greet(name):
+    return "hello, " + name
+
+
+def add(a, b):
+    return a + b
+
+
+if __name__ == "__main__":
+    print(greet("world"))
+    print(add(1, 2))`,
+    sample: {
+      skills: {
+        security: { text: "LEVEL: 低\n【安全评审结论】未发现注入、越权、敏感信息暴露等风险点；输入来自程序内部字面量，无外部可控输入进入危险汇。结论：本维度通过。", delay: 1.0 },
+        performance: { text: "LEVEL: 低\n【性能评审结论】两处纯函数计算，无 I/O、无循环放大；字符串拼接与数值加法开销可忽略。结论：性能无瓶颈。", delay: 1.3 },
+        architecture: { text: "LEVEL: 低\n【架构评审结论】greet 与 add 职责单一、无外部依赖，边界清晰。可选优化：如扩展为对外模块，建议补充类型注解以明确接口契约。", delay: 1.1 },
+        standard: { text: "LEVEL: 低\n【规范评审结论】命名清晰、无魔法值；主入口使用 if __name__ == \"__main__\" 保护，符合惯例。建议：补充 docstring 与类型注解进一步提升可读性。", delay: 1.0 }
+      },
+      conflict: { text: "【冲突汇总】\n\n多方共识：四路结论一致认为当前代码整洁、低风险，未出现维度间对抗性冲突。\n\n建议（非冲突项）：\n1｜为 greet / add 补充 docstring 与类型注解，使签名自解释；\n2｜如后续接入外部输入，需在入口处增加校验，避免风险敞口。\n\n注：本用例验证的是\"不制造伪冲突\"——没有真实取舍时，系统不应硬造对立观点。这正是评审工具最容易翻车的地方。", delay: 1.6 }
+    }
+  }
+];
 
 /* ============================================================
    语法高亮（轻量 Python）
@@ -667,7 +783,6 @@ function highlight(code) {
   let out = "", i = 0, n = code.length;
   while (i < n) {
     const c = code[i];
-
     if (c === "#") {
       let j = code.indexOf("\n", i);
       if (j < 0) j = n;
@@ -675,7 +790,6 @@ function highlight(code) {
       i = j;
       continue;
     }
-
     if (c === '"' || c === "'") {
       let j = i + 1;
       while (j < n) {
@@ -688,7 +802,6 @@ function highlight(code) {
       i = j;
       continue;
     }
-
     if (/[A-Za-z_]/.test(c)) {
       let j = i;
       while (j < n && /[A-Za-z0-9_]/.test(code[j])) j++;
@@ -700,7 +813,6 @@ function highlight(code) {
       i = j;
       continue;
     }
-
     if (/[0-9]/.test(c)) {
       let j = i;
       while (j < n && /[0-9._]/.test(code[j])) j++;
@@ -708,7 +820,6 @@ function highlight(code) {
       i = j;
       continue;
     }
-
     out += esc(c);
     i++;
   }
@@ -723,21 +834,7 @@ const hlayer = document.getElementById("hlayer");
 const gutter = document.getElementById("gutter");
 const lineCount = document.getElementById("lineCount");
 const charCount = document.getElementById("charCount");
-
-const INIT_CODE = `import sqlite3
-
-def get_user(username):
-    conn = sqlite3.connect('test.db')
-    cursor = conn.cursor()
-    query = "SELECT * FROM users WHERE name = '" + username + "'"
-    cursor.execute(query)
-    resp = cursor.fetchall()
-    conn.close()
-    return resp
-
-name = input("请输入用户名：")
-rows = get_user(name)
-print(rows)`;
+const tabName = document.getElementById("tabName");
 
 function renderCode() {
   const code = codeInput.value;
@@ -794,7 +891,6 @@ function toParagraphs(text) {
     .split(/\n{2,}/)
     .map(p => p.replace(/\n/g, " ").trim())
     .filter(Boolean);
-  // 在"位置：/问题：/建议：…"等标签前断行，让结论卡有结构感
   const splitAt = /(?<=[。；;！？\s]|^)(?=(?:位置|问题|修复|建议|代价|损耗原因|架构影响|权衡说明|结论|主张)[：:])/g;
   return flat.flatMap(p => p.split(splitAt).map(s => s.trim())).filter(Boolean);
 }
@@ -807,7 +903,7 @@ function parseLevel(text) {
   const m = /^\s*LEVEL\s*[:：]\s*[＊*\s]*(低|中|高)/i.exec(text || "");
   if (m) return { 低: "low", 中: "mid", 高: "high" }[m[1]];
   const t = text || "";
-  if (/(高危|致命|Critical|严重|不可妥协)/.test(t)) return "high";
+  if (/(高危|致命|Critical|严重|不可妥协|开销大)/.test(t)) return "high";
   if (/(较多问题|有缺陷|一般|中等|耦合)/.test(t)) return "mid";
   return "low";
 }
@@ -837,6 +933,27 @@ function parseConflict(text) {
 }
 
 /* ============================================================
+   态势图节点
+   ============================================================ */
+function setNode(key, state, stateText, levelText, levelColor) {
+  const g = document.getElementById("node-" + key);
+  if (g) g.setAttribute("class", "node " + state);
+  const ns = document.getElementById("ns-" + key);
+  if (ns) ns.textContent = stateText;
+  const nl = document.getElementById("nl-" + key);
+  if (nl) { nl.textContent = levelText || ""; nl.setAttribute("fill", levelColor || "#3E5A8C"); }
+  const beam = document.getElementById("beam-" + key);
+  if (beam) beam.setAttribute("class", "beam " + (state === "run" ? "live" : state === "done" ? "done" : ""));
+}
+
+function setHub(text, flash) {
+  const hub = document.getElementById("hub");
+  const s = document.getElementById("hubStatus");
+  if (s) s.textContent = text;
+  if (hub) hub.setAttribute("class", flash ? "hub-flash" : "");
+}
+
+/* ============================================================
    结果渲染
    ============================================================ */
 const vlist = document.getElementById("vlist");
@@ -847,6 +964,7 @@ const cfCount = document.getElementById("cfCount");
 const statePill = document.getElementById("statePill");
 const stateText = document.getElementById("stateText");
 const footNote = document.getElementById("footNote");
+const footNote2 = document.getElementById("footNote2");
 const progress = document.getElementById("progress");
 
 let cards = {};
@@ -857,6 +975,8 @@ function setState(kind, text) {
   stateText.textContent = text;
 }
 
+const SEV_COLOR = { high: "#FF5E6C", mid: "#FFB84D", low: "#35E0A1" };
+
 function buildCards() {
   vlist.innerHTML = "";
   cards = {};
@@ -864,7 +984,6 @@ function buildCards() {
   SKILLS.forEach((s, i) => {
     const el = document.createElement("article");
     el.className = "card dim placeholder";
-    el.style.setProperty("--c", s.color);
     el.innerHTML =
       '<div class="card-head">' +
         '<span class="card-idx">0' + (i + 1) + '</span>' +
@@ -880,13 +999,16 @@ function buildCards() {
   document.querySelectorAll(".metric").forEach(m => {
     m.querySelector(".m-value").textContent = "—";
     m.querySelector(".m-value").style.color = "";
-    m.style.removeProperty("--c");
+    m.querySelector(".m-value").style.textShadow = "";
     m.querySelector(".m-bar i").style.width = "0%";
     m.classList.remove("hot", "warm", "cool");
   });
+  SKILLS.forEach((s, i) => {
+    setTimeout(() => setNode(s.key, "", "待命", ""), i * 60);
+  });
+  setHub("待命 · 等待提交代码", false);
   cfCount.textContent = "— 项冲突";
-  cfBody.innerHTML = '<div class="cf-txt" style="color:#57627E;line-height:1.9">四路结论收敛后，互斥的主张会在这里对质。</div>';
-  conflictBox.classList.add("show");
+  cfBody.innerHTML = '<div class="cf-empty">四路评审结论收敛后，互斥的主张会在这里对质。</div>';
 }
 
 function updateMetric(key, level) {
@@ -895,8 +1017,9 @@ function updateMetric(key, level) {
   const label = (SEV_TEXT[key] || {})[level] || (level === "high" ? "高" : level === "mid" ? "中" : "低");
   const val = box.querySelector(".m-value");
   val.textContent = label;
-  const c = level === "high" ? "#E5697A" : level === "mid" ? "#D9A05B" : "#56B3A2";
+  const c = SEV_COLOR[level] || "#5F7FB4";
   val.style.color = c;
+  val.style.textShadow = "0 0 12px " + c + "66";
   box.style.setProperty("--c", c);
   box.querySelector(".m-bar i").style.width = (LEVEL_W[level] || 40) + "%";
   box.classList.toggle("hot", level === "high");
@@ -926,9 +1049,12 @@ function applySkill(key, payload) {
   counter.textContent = doneCount + " / 4";
   const seg = progress.querySelector('i[data-k="' + key + '"]');
   if (seg) {
-    seg.style.setProperty("--c", SKILLS.find(s => s.key === key).color);
+    seg.style.setProperty("--c", SEV_COLOR[level] || "var(--cyan)");
     seg.classList.add("on");
   }
+  const ms = payload.ms ? (payload.ms / 1000).toFixed(1) + "s" : "";
+  setNode(key, "done", "完成 " + ms, label, SEV_COLOR[level]);
+  setHub(doneCount < 4 ? "已收 " + doneCount + "/4 路结论 · 冲突识别中…" : "四路结论就绪 · 冲突消解中…", false);
 }
 
 function applyError(key, name, msg) {
@@ -941,6 +1067,7 @@ function applyError(key, name, msg) {
   card.querySelector(".card-body").innerHTML = "<p>" + inline(msg || "该路评审未完成") + "</p>";
   doneCount++;
   counter.textContent = doneCount + " / 4";
+  setNode(key, "", "中断", "", "");
 }
 
 function applyConflict(text) {
@@ -949,7 +1076,7 @@ function applyConflict(text) {
   if (!parsed.items.length) {
     cfCount.textContent = "";
     cfBody.innerHTML = '<div class="cf-txt">' + toParagraphs(text).map(p => "<p>" + inline(p) + "</p>").join("") + "</div>";
-    conflictBox.classList.add("show");
+    setHub("多方共识 · 无对抗性冲突", true);
     return;
   }
 
@@ -987,7 +1114,7 @@ function applyConflict(text) {
     parsed.advice.forEach(a => {
       const best = /推荐|较优解/.test(a.body);
       html += "<p style=\"margin:6px 0\"><span class=\"lbl\">方案 " + esc(a.num) + " · " + esc(a.title) +
-              "</span>" + (best ? ' <span class="ic" style="color:var(--std);border-color:rgba(86,179,162,.4)">推荐</span>' : "") +
+              "</span>" + (best ? ' <span class="ic" style="color:var(--std);border-color:rgba(53,224,161,.5)">推荐</span>' : "") +
               "<br>" + inline(a.body) + "</p>";
     });
     html += "</div></div>";
@@ -998,14 +1125,42 @@ function applyConflict(text) {
   }
 
   cfBody.innerHTML = html;
-  conflictBox.classList.add("show");
+  setHub(parsed.items.length + " 项冲突已识别 · 方案已生成", true);
+}
+
+/* ============================================================
+   用例切换
+   ============================================================ */
+const caseChips = document.getElementById("caseChips");
+let curCase = 0;
+let running = false;
+
+function renderChips() {
+  caseChips.innerHTML = "";
+  CASES.forEach((c, i) => {
+    const el = document.createElement("span");
+    el.className = "chip" + (i === curCase ? " on" : "");
+    el.innerHTML = "<b>" + c.tag + "</b>" + c.name;
+    el.onclick = () => { if (!running) setCase(i); };
+    caseChips.appendChild(el);
+  });
+}
+
+function setCase(i) {
+  curCase = i;
+  const c = CASES[i];
+  codeInput.value = c.code;
+  tabName.textContent = c.file;
+  renderChips();
+  renderCode();
+  buildCards();
+  footNote.textContent = "用例 " + c.tag + " " + c.name + " 已装载 · 点击「启动评审」开庭";
 }
 
 /* ============================================================
    运行
    ============================================================ */
 const runBtn = document.getElementById("runBtn");
-let running = false;
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -1017,6 +1172,11 @@ async function run() {
   buildCards();
   setState("busy", "评审中");
   footNote.textContent = "四路评审并行开庭…";
+  SKILLS.forEach((s, i) => setTimeout(() => {
+    if (!running) return;
+    setNode(s.key, "run", "评审中…", "");
+  }, 300 + i * 260));
+  setHub("四路评审并行进行中…", false);
 
   const t0 = performance.now();
   let live = false;
@@ -1031,6 +1191,9 @@ async function run() {
     await runSample();
     const secs = ((performance.now() - t0) / 1000).toFixed(1);
     footNote.textContent = "样例回放 · 四路评审 · " + secs + "s";
+    footNote2.innerHTML = "样例回放模式 · <b>评审数据真实</b>";
+  } else {
+    footNote2.innerHTML = "评审引擎 <b>在线</b>";
   }
 
   setState("done", "已完成");
@@ -1091,8 +1254,9 @@ function parseSSE(raw) {
 }
 
 async function runSample() {
+  const c = CASES[curCase];
   const jobs = SKILLS.map((s, i) => {
-    const item = SAMPLE.skills[s.key];
+    const item = c.sample.skills[s.key];
     const delay = (item.delay || 1.2) * 1000 + i * 140;
     return sleep(delay).then(() => {
       applySkill(s.key, { key: s.key, name: s.name, text: item.text });
@@ -1104,22 +1268,40 @@ async function runSample() {
   await sleep(520);
   footNote.textContent = "四路结论就绪 · 正在识别冲突…";
   await sleep(420);
-  applyConflict(SAMPLE.conflict.text);
+  applyConflict(c.sample.conflict.text);
 }
+
+/* ============================================================
+   时钟
+   ============================================================ */
+const WEEKS = ["周日","周一","周二","周三","周四","周五","周六"];
+function tick() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, "0");
+  document.getElementById("clockTime").textContent = p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+  document.getElementById("clockDate").textContent = d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+  document.getElementById("clockWeek").textContent = WEEKS[d.getDay()];
+}
+tick();
+setInterval(tick, 1000);
+
+/* 底栏导航（视觉联动） */
+document.querySelectorAll(".nav-item").forEach(el => {
+  el.addEventListener("click", () => {
+    document.querySelectorAll(".nav-item").forEach(x => x.classList.remove("on"));
+    el.classList.add("on");
+  });
+});
 
 /* ============================================================
    启动
    ============================================================ */
-codeInput.value = INIT_CODE;
+renderChips();
+codeInput.value = CASES[0].code;
 renderCode();
 buildCards();
 
 runBtn.addEventListener("click", run);
-
-if (window.innerWidth > 1180) {
-  codeInput.style.height = "100%";
-}
-
 </script>
 </body>
 </html>
