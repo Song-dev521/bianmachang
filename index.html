@@ -69,6 +69,28 @@
     position: absolute; inset: 0; opacity: .025;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
+  .bg .aurora { position: absolute; border-radius: 50%; filter: blur(110px); will-change: transform; }
+  .bg .au1 {
+    width: 54vw; height: 54vw; top: -20%; left: -12%; opacity: .14;
+    background: radial-gradient(circle, #1E66FF, transparent 62%);
+    animation: drift1 28s ease-in-out infinite alternate;
+  }
+  .bg .au2 {
+    width: 46vw; height: 46vw; bottom: -26%; right: -10%; opacity: .10;
+    background: radial-gradient(circle, #0FA8B5, transparent 62%);
+    animation: drift2 34s ease-in-out infinite alternate;
+  }
+  .bg .au3 {
+    width: 38vw; height: 38vw; top: 34%; left: 42%; opacity: .08;
+    background: radial-gradient(circle, #6C3DFF, transparent 60%);
+    animation: drift3 40s ease-in-out infinite alternate;
+  }
+  @keyframes drift1 { to { transform: translate(9vw, 6vh) scale(1.14); } }
+  @keyframes drift2 { to { transform: translate(-8vw, -5vh) scale(1.10); } }
+  @keyframes drift3 { to { transform: translate(-7vw, 6vh) scale(.9); } }
+  @media (prefers-reduced-motion: reduce) {
+    .bg .aurora, .bg .sweepline { animation: none; }
+  }
 
   /* ================= 框架 ================= */
   .shell {
@@ -264,6 +286,8 @@
   .col-mid { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
   .p-arena { flex: 1 1 54%; }
   .p-conflict { flex: 1 1 46%; }
+  .p-conflict.solo { flex: 1 1 100%; }
+  #caseLib.solo, #teachBox.solo { flex: 1 1 100%; }
 
   .arena-wrap { flex: 1 1 auto; min-height: 0; position: relative; }
   .arena-wrap svg { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -437,6 +461,47 @@
   .nav-right { margin-left: auto; display: flex; align-items: center; gap: 18px; font-family: var(--mono); font-size: 10px; color: var(--ink-4); letter-spacing: .1em; }
   .nav-right b { color: var(--std); font-weight: 500; }
 
+  /* ================= 视图切换 ================= */
+  .panel.hide { display: none !important; }
+
+  /* 用例库 */
+  .case-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px;
+    scrollbar-width: thin; scrollbar-color: rgba(64,150,255,.3) transparent; }
+  .case-list::-webkit-scrollbar { width: 5px; }
+  .case-list::-webkit-scrollbar-thumb { background: rgba(64,150,255,.3); border-radius: 3px; }
+  .case-card {
+    border: 1px solid rgba(64,150,255,.14); cursor: pointer;
+    background: linear-gradient(180deg, rgba(20,52,110,.4), rgba(9,28,66,.35));
+    padding: 12px 15px 12px; transition: border-color .25s ease, box-shadow .25s ease, transform .15s ease;
+  }
+  .case-card:hover { border-color: rgba(64,150,255,.4); box-shadow: 0 0 14px rgba(40,110,255,.14); transform: translateX(2px); }
+  .case-card.cur { border-color: rgba(53,198,255,.55); box-shadow: 0 0 16px rgba(53,198,255,.16), 0 0 16px rgba(53,198,255,.06) inset; }
+  .cc-head { display: flex; align-items: center; gap: 10px; }
+  .cc-tag { font-family: var(--mono); font-size: 11px; color: var(--cyan); }
+  .cc-head b { font-size: 13.5px; font-weight: 600; color: #E7F2FF; letter-spacing: .05em; }
+  .cc-head code { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); background: rgba(40,110,240,.12); border: 1px solid rgba(70,150,255,.22); padding: 1px 7px; }
+  .cc-cur { margin-left: auto; font-family: var(--mono); font-size: 9.5px; letter-spacing: .16em; color: var(--std); border: 1px solid rgba(53,224,161,.4); padding: 2px 8px; }
+  .case-card p { margin-top: 7px; font-size: 12px; line-height: 1.8; color: #9DB6DE; }
+  .cc-meta { margin-top: 7px; font-family: var(--mono); font-size: 9.5px; letter-spacing: .1em; color: var(--ink-4); }
+
+  /* 教学场景 */
+  .tg-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 13px 16px;
+    scrollbar-width: thin; scrollbar-color: rgba(64,150,255,.3) transparent; }
+  .tg-body::-webkit-scrollbar { width: 5px; }
+  .tg-body::-webkit-scrollbar-thumb { background: rgba(64,150,255,.3); border-radius: 3px; }
+  .tg-intro { font-size: 12px; line-height: 1.85; color: #9DB6DE; padding-bottom: 10px; border-bottom: 1px solid rgba(64,150,255,.12); }
+  .tg-intro b { color: var(--cyan); font-weight: 500; }
+  .tg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 11px; }
+  .tg-card { border: 1px solid rgba(64,150,255,.14); background: rgba(20,52,110,.32); padding: 11px 13px; }
+  .tg-card h5 { font-size: 12.5px; font-weight: 600; color: #E7F2FF; letter-spacing: .05em; display: flex; align-items: center; gap: 7px; }
+  .tg-card h5::before { content: ""; width: 5px; height: 5px; transform: rotate(45deg); background: var(--cyan); box-shadow: 0 0 7px var(--cyan); }
+  .tg-card p { margin-top: 6px; font-size: 11.5px; line-height: 1.8; color: #9DB6DE; }
+  .tg-advice { margin-top: 12px; border-top: 1px solid rgba(64,150,255,.12); padding-top: 4px; }
+  .tg-advice h5 { font-size: 12.5px; font-weight: 600; color: #E7F2FF; letter-spacing: .05em; padding: 6px 0; }
+  .tg-advice p { font-size: 11.5px; line-height: 1.8; color: #9DB6DE; margin-bottom: 7px; }
+  .tg-advice .lbl { color: #CFE2FF; font-weight: 500; }
+  .tg-advice .ic { font-family: var(--mono); font-size: 10px; background: rgba(40,110,240,.14); border: 1px solid rgba(70,150,255,.28); padding: 1px 5px; color: #BFDBFF; }
+
   /* ================= 响应式 ================= */
   @media (max-width: 1220px) {
     body { overflow: auto; }
@@ -460,7 +525,7 @@
 </style>
 </head>
 <body>
-  <div class="bg"><div class="grad"></div><div class="gridlines"></div><div class="sweepline"></div><div class="noise"></div></div>
+  <div class="bg"><div class="grad"></div><i class="aurora au1"></i><i class="aurora au2"></i><i class="aurora au3"></i><div class="gridlines"></div><div class="sweepline"></div><div class="noise"></div></div>
 
   <div class="shell">
     <!-- 顶栏 -->
@@ -504,7 +569,7 @@
 
       <!-- 中：评审态势 + 冲突矩阵 -->
       <section class="col-mid">
-        <div class="panel p-arena"><i class="ck1"></i>
+        <div class="panel p-arena" id="arenaPanel"><i class="ck1"></i>
           <div class="p-hd">
             <span class="p-tag">02</span><h2>评审态势</h2><span class="p-en">LIVE VIEW</span>
             <div class="right"><div class="progress" id="progress"><i data-k="security"></i><i data-k="performance"></i><i data-k="architecture"></i><i data-k="standard"></i></div></div>
@@ -588,6 +653,22 @@
             <div class="cf-empty">四路评审结论收敛后，互斥的主张会在这里对质。<br>选择左侧用例或粘贴代码，点击「启动评审」。</div>
           </div>
         </div>
+
+        <div class="panel hide" id="caseLib"><i class="ck1"></i>
+          <div class="p-hd">
+            <span class="p-tag">05</span><h2>用例库</h2><span class="p-en">CASE LIBRARY</span>
+            <div class="right"><span class="counter" id="caseLibCount"></span></div>
+          </div>
+          <div class="case-list" id="caseLibList"></div>
+        </div>
+
+        <div class="panel hide" id="teachBox"><i class="ck1"></i>
+          <div class="p-hd">
+            <span class="p-tag">06</span><h2>教学场景</h2><span class="p-en">CLASSROOM</span>
+            <div class="right"><span class="counter" id="teachCase"></span></div>
+          </div>
+          <div class="tg-body" id="teachBody"></div>
+        </div>
       </section>
 
       <!-- 右：指标 + 结论流 -->
@@ -629,10 +710,10 @@
 
     <!-- 底栏 -->
     <footer class="nav">
-      <div class="nav-item on"><i></i>评审态势</div>
-      <div class="nav-item"><i></i>冲突矩阵</div>
-      <div class="nav-item"><i></i>用例库</div>
-      <div class="nav-item"><i></i>教学场景</div>
+      <div class="nav-item on" data-view="live"><i></i>评审态势</div>
+      <div class="nav-item" data-view="matrix"><i></i>冲突矩阵</div>
+      <div class="nav-item" data-view="cases"><i></i>用例库</div>
+      <div class="nav-item" data-view="teach"><i></i>教学场景</div>
       <div class="nav-right">
         <span id="footNote2">评审引擎 <b>在线</b></span>
         <span id="lastReview">本次会话 · 尚未评审</span>
@@ -1186,11 +1267,14 @@ async function run() {
 
   const t0 = performance.now();
   let live = false;
+  const AUTO_DEMO = location.search.indexOf("auto=1") >= 0;
 
-  try {
-    live = await tryLive(codeInput.value);
-  } catch (e) {
-    live = false;
+  if (!AUTO_DEMO) {
+    try {
+      live = await tryLive(codeInput.value);
+    } catch (e) {
+      live = false;
+    }
   }
 
   if (!live) {
@@ -1299,12 +1383,98 @@ function tick() {
 tick();
 setInterval(tick, 1000);
 
-/* 底栏导航（视觉联动） */
-document.querySelectorAll(".nav-item").forEach(el => {
-  el.addEventListener("click", () => {
-    document.querySelectorAll(".nav-item").forEach(x => x.classList.remove("on"));
-    el.classList.add("on");
+/* ============================================================
+   底栏导航 · 视图切换
+   ============================================================ */
+const VIEW_PANELS = {
+  live:   ["arenaPanel", "conflictBox"],
+  matrix: ["conflictBox"],
+  cases:  ["caseLib"],
+  teach:  ["teachBox"]
+};
+
+function switchView(name) {
+  for (const [key, ids] of Object.entries(VIEW_PANELS)) {
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle("hide", key !== name);
+    });
+  }
+}
+
+const CASE_DESC = [
+  "SQL 字符串拼接注入 + SELECT * 全列暴露 + 连接未释放。四路齐亮红灯，核心争点是「改函数名还是改实现」。",
+  "安全说「没问题」、性能说「有隐患」，同一段代码两个结论同时成立——冲突消解的核心教学样本。",
+  "单点逻辑漏洞，体量最小。适合先看四路评审如何从各自视角收敛到同一个位置。",
+  "规范无高危的对照组。看「没有对抗性冲突」时，冲突消解器会输出什么。"
+];
+
+function renderCaseLib() {
+  const box = document.getElementById("caseLibList");
+  if (!box) return;
+  document.getElementById("caseLibCount").textContent = CASES.length + " 个内置用例";
+  box.innerHTML = "";
+  CASES.forEach((c, i) => {
+    const el = document.createElement("div");
+    el.className = "case-card" + (i === curCase ? " cur" : "");
+    el.innerHTML =
+      '<div class="cc-head"><span class="cc-tag">' + c.tag + '</span><b>' + esc(c.name) + "</b><code>" + esc(c.file) + "</code>" +
+      (i === curCase ? '<span class="cc-cur">当前</span>' : "") + "</div>" +
+      "<p>" + esc(CASE_DESC[i] || "") + "</p>" +
+      '<div class="cc-meta">' + c.code.split("\n").length + " 行 · PYTHON · 点击装载到代码提交台</div>";
+    el.onclick = () => {
+      if (running) return;
+      setCase(i);
+      renderCaseLib();
+      switchView("live");
+      document.querySelectorAll(".nav-item").forEach(x => x.classList.toggle("on", x.dataset.view === "live"));
+    };
+    box.appendChild(el);
   });
+}
+
+function renderTeach() {
+  const body = document.getElementById("teachBody");
+  if (!body) return;
+  const c = CASES[curCase];
+  document.getElementById("teachCase").textContent = c.tag + " " + c.name;
+  let parsed = { items: [], advice: [], note: "" };
+  try { parsed = parseConflict(c.sample.conflict.text); } catch (e) {}
+
+  const adviceHtml = parsed.advice.map(a => {
+    const best = /推荐|较优解/.test(a.body);
+    return "<p><span class=\"lbl\">方案 " + esc(a.num) + " · " + esc(a.title) + "</span>" +
+      (best ? ' <span class="ic">推荐</span>' : "") + "<br>" + inline(a.body) + "</p>";
+  }).join("");
+
+  body.innerHTML =
+    '<div class="tg-intro">当前装载用例 <b>' + esc(c.file) + "</b> · " + esc(c.name) +
+    "。教学场景把四路评审结论重组成课堂讨论素材：先定位冲突，再比较可选方案与各自代价——结论不唯一，取舍即答案。</div>" +
+    '<div class="tg-grid">' +
+    '<div class="tg-card"><h5>冲突从哪来</h5><p>' + (parsed.items.length ? parsed.items.length + " 项对抗性冲突：同一处代码，两个评审视角给出互斥主张，谁都无法直接驳回对方。" : "本用例无对抗性冲突：四路结论彼此兼容，「无冲突」本身也是评审输出的一种。") + "</p></div>" +
+    '<div class="tg-card"><h5>课堂讨论点</h5><p>' + (parsed.items.length ? "逐条过「主张 A vs 主张 B」，让同学先站队再听权衡说明；冲突项全部来自真实评审输出，不是预设剧本。" : "讨论重点转向：为什么四路视角在这段代码上达成共识？共识成立的条件是什么？") + "</p></div>" +
+    '<div class="tg-card"><h5>怎么用</h5><p>① 用例库装载用例 → ② 启动评审看四路并行 → ③ 冲突矩阵看主张对质 → ④ 回到这里看方案与代价，组织讨论。</p></div>' +
+    '<div class="tg-card"><h5>评分要点对照</h5><p>冲突识别与消解是本项目区别于「标准答案工具」的核心：每个方案都标注了代价，安全类不可妥协项会被单独标出。</p></div>' +
+    "</div>" +
+    (adviceHtml ? '<div class="tg-advice"><h5>◆ 综合方案与代价（来自冲突消解器）</h5>' + adviceHtml + "</div>" : "") +
+    (parsed.note ? '<div class="verdict-note"><b>注 </b>' + inline(parsed.note) + "</div>" : "");
+}
+
+function activateView(name) {
+  if (!VIEW_PANELS[name]) return;
+  document.querySelectorAll(".nav-item").forEach(x => x.classList.toggle("on", x.dataset.view === name));
+  switchView(name);
+  if (name === "cases") renderCaseLib();
+  if (name === "teach") renderTeach();
+  const solo = name !== "live";
+  ["conflictBox", "caseLib", "teachBox"].forEach(id => {
+    const p = document.getElementById(id);
+    if (p) p.classList.toggle("solo", solo);
+  });
+}
+
+document.querySelectorAll(".nav-item").forEach(el => {
+  el.addEventListener("click", () => activateView(el.dataset.view));
 });
 
 /* ============================================================
@@ -1316,6 +1486,13 @@ renderCode();
 buildCards();
 
 runBtn.addEventListener("click", run);
+
+/* 演示自动化：index.html?auto=1 打开后自动跑一遍样例评审 */
+if (location.search.indexOf("auto=1") >= 0) setTimeout(run, 500);
+
+/* 视图直达：index.html?view=matrix / cases / teach */
+const initView = new URLSearchParams(location.search).get("view");
+if (initView) setTimeout(() => activateView(initView), 0);
 </script>
 </body>
 </html>
