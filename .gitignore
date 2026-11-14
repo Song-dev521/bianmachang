@@ -5,3 +5,7 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# 临时调试脚本
+.tmp_*
+*.tmp
