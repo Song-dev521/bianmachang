@@ -82,7 +82,9 @@
   .hd { flex: 0 0 72px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
   .hd-side { display: flex; align-items: center; gap: 14px; font-family: var(--mono); font-size: 11px; color: var(--ink-3); letter-spacing: .08em; }
   .hd-side.r { justify-content: flex-end; }
-  .hd-clock { font-family: var(--mono); font-size: 21px; color: var(--cyan); text-shadow: 0 0 14px rgba(53,198,255,.45); font-variant-numeric: tabular-nums; letter-spacing: .06em; }
+  .hd-timed { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+  .hd-clock { font-family: var(--mono); font-size: 21px; line-height: 1.1; color: var(--cyan); text-shadow: 0 0 14px rgba(53,198,255,.45); font-variant-numeric: tabular-nums; letter-spacing: .06em; }
+  .hd-sub { font-family: var(--mono); font-size: 10px; color: var(--ink-4); letter-spacing: .12em; font-variant-numeric: tabular-nums; }
 
   .hd-title { text-align: center; position: relative; padding: 0 30px; }
   .hd-title-row { display: flex; align-items: center; justify-content: center; gap: 18px; }
@@ -463,14 +465,17 @@
   <div class="shell">
     <!-- 顶栏 -->
     <header class="hd">
-      <div class="hd-side"><span>CODE REVIEW ARENA</span><span>·</span><span id="clockDate">--------</span><span id="clockWeek"></span></div>
+      <div class="hd-side"><span>CODE REVIEW ARENA</span><span>·</span><span>MULTI-AGENT</span></div>
       <div class="hd-title">
         <div class="hd-title-row"><span class="hd-deco"></span><h1>辩 码 场</h1><span class="hd-deco r"></span></div>
         <p>多维代码权衡评审平台 · 让冲突先上台</p>
       </div>
       <div class="hd-side r">
         <div class="state-pill ready" id="statePill"><i class="led"></i><span id="stateText">待命</span></div>
-        <div class="hd-clock" id="clockTime">--:--:--</div>
+        <div class="hd-timed">
+          <div class="hd-clock" id="clockTime">--:--:--</div>
+          <div class="hd-sub"><span id="clockDate">--------</span> · <span id="clockWeek"></span></div>
+        </div>
       </div>
     </header>
 
@@ -630,6 +635,7 @@
       <div class="nav-item"><i></i>教学场景</div>
       <div class="nav-right">
         <span id="footNote2">评审引擎 <b>在线</b></span>
+        <span id="lastReview">本次会话 · 尚未评审</span>
         <span>四路并行 · 冲突消解</span>
         <span>V2.0</span>
       </div>
@@ -1197,8 +1203,16 @@ async function run() {
   }
 
   setState("done", "已完成");
+  stampReviewTime();
   running = false;
   runBtn.disabled = false;
+}
+
+function stampReviewTime() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, "0");
+  const el = document.getElementById("lastReview");
+  if (el) el.textContent = "最近评审 " + p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
 }
 
 async function tryLive(code) {
