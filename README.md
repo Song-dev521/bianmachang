@@ -12,7 +12,7 @@
 ![Platform](https://img.shields.io/badge/Built%20on-华为云码道%20CodeArts-C7000A)
 ![Competition](https://img.shields.io/badge/2026%20华为开发者大赛-智能体创新赛-F471B5)
 
-<img src="docs/assets/front-demo.png" width="92%" alt="辩码场前端真实运行截图：四路评审并发返回，冲突汇总卡片在下方" />
+<img src="docs/assets/front-demo.jpg" width="92%" alt="辩码场前端真实运行截图：星空评审大屏，四路评审并发返回，右侧为结论流与指标灯牌" />
 
 </div>
 
@@ -54,6 +54,18 @@
 <div align="center"><img src="docs/assets/conflict-list.png" width="76%" alt="码道平台上的冲突权衡清单真实输出" /></div>
 
 > 这才是这个项目想让学生看到的东西：**四个都对，但没法同时都对。**
+
+## 界面 · 四个视图
+
+大屏分四个视图：**评审态势**（四路并发 + 态势图）、**冲突矩阵**（互斥主张对质）、**解决方案**（主推方案 / 备选代价 / 冲突裁决 / 落地顺序 / 不可妥协项）、**数据分析**（雷达 / 环形 / 条形 / 耗时 / TOP5）。后两页的数据全部来自**本次评审的真实输出**：未评审时显示占位，评审中逐条生长，不存在预设图表值。
+
+<div align="center">
+<img src="docs/assets/front-demo.jpg" width="49.5%" alt="评审态势：四路评审并发返回" />&nbsp;
+<img src="docs/assets/matrix-demo.jpg" width="49.5%" alt="冲突矩阵：互斥主张对质" /><br><br>
+<img src="docs/assets/fix-demo.jpg" width="49.5%" alt="解决方案：主推方案与代价" />&nbsp;
+<img src="docs/assets/chart-demo.jpg" width="49.5%" alt="数据分析：随本次评审实时生成" />
+</div>
+
 
 ## 架构
 
