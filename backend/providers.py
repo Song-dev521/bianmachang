@@ -90,7 +90,7 @@ class MaasProvider:
             api_key=api_key,
             base_url=os.getenv("MAAS_BASE_URL", DEFAULT_BASE_URL).strip() or DEFAULT_BASE_URL,
         )
-        self.timeout = float(os.getenv("REVIEW_TIMEOUT", "60"))
+        self.timeout = float(os.getenv("REVIEW_TIMEOUT", "120"))
         # 该模型带思考过程，输出预算要给足，否则正文会被 reasoning 吃空
         self.max_tokens = int(os.getenv("MAX_TOKENS", "2048"))
 
