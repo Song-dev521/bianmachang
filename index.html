@@ -310,6 +310,23 @@
   .beam.done { stroke: var(--c); stroke-width: 2; stroke-dasharray: none; opacity: .85; filter: drop-shadow(0 0 5px var(--c)); }
   @keyframes dashflow { to { stroke-dashoffset: -28; } }
 
+  /* 态势增强层 */
+  .ring-hex { fill: none; stroke: rgba(64,150,255,.30); stroke-width: 1; stroke-dasharray: 7 11; transform-origin: 320px 210px; animation: rot 34s linear infinite; }
+  #hubRipples { transition: opacity .5s ease; }
+  #hubRipples.on { opacity: 1 !important; }
+  .ripple { fill: none; stroke-width: 1.6; }
+  .ndot { fill: #2E4A7E; transition: fill .3s; }
+  .node.run .ndot { fill: var(--c); animation: blink 1s ease-in-out infinite; }
+  .node.done .ndot { fill: var(--c); }
+  .arena-log { position: absolute; left: 16px; bottom: 8px; font-family: var(--mono); font-size: 9.5px; line-height: 1.75; letter-spacing: .05em; pointer-events: none; max-width: 56%; text-align: left; }
+  .arena-log div { color: #6E8FC4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .arena-log div b { color: var(--cyan); font-weight: 500; }
+  .arena-log div:first-child { color: #A8C6F0; }
+  .arena-log div em { color: inherit; font-style: normal; }
+  .arena-log div:nth-child(2) { opacity: .62; }
+  .arena-log div:nth-child(3) { opacity: .38; }
+  .arena-log div:nth-child(4) { opacity: .2; }
+
   .node-box { fill: rgba(9,30,72,.85); stroke: rgba(64,150,255,.30); stroke-width: 1.2; }
   .node.run .node-box { stroke: var(--c); filter: drop-shadow(0 0 8px var(--c)); }
   .node.done .node-box { stroke: var(--c); fill: rgba(16,48,110,.9); filter: drop-shadow(0 0 9px var(--c)); }
@@ -581,7 +598,21 @@
                   <feGaussianBlur stdDeviation="3" result="b"/>
                   <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
                 </filter>
+                <pattern id="dotsPat" width="26" height="26" patternUnits="userSpaceOnUse">
+                  <circle cx="1.5" cy="1.5" r="1.1" fill="rgba(96,150,230,.10)"/>
+                </pattern>
               </defs>
+
+              <!-- 背景星点网格 -->
+              <rect x="0" y="0" width="640" height="420" fill="url(#dotsPat)"/>
+
+              <!-- 四角 HUD 括号 -->
+              <g stroke="rgba(94,160,255,.32)" fill="none" stroke-width="1.2">
+                <path d="M 10 26 L 10 10 L 26 10"/>
+                <path d="M 614 10 L 630 10 L 630 26"/>
+                <path d="M 10 394 L 10 410 L 26 410"/>
+                <path d="M 614 410 L 630 410 L 630 394"/>
+              </g>
 
               <!-- 装饰环 -->
               <g opacity=".5">
@@ -594,10 +625,37 @@
               </g>
 
               <!-- 光束 -->
-              <path id="beam-security"     class="beam" d="M 128 122 Q 200 160 276 190"/>
-              <path id="beam-performance"  class="beam" d="M 512 122 Q 440 160 364 190"/>
-              <path id="beam-architecture" class="beam" d="M 128 298 Q 200 262 276 232"/>
-              <path id="beam-standard"     class="beam" d="M 512 298 Q 440 262 364 232"/>
+              <path id="beam-security"     class="beam" style="--c:var(--sec)" d="M 128 122 Q 200 160 276 190"/>
+              <path id="beam-performance"  class="beam" style="--c:var(--perf)" d="M 512 122 Q 440 160 364 190"/>
+              <path id="beam-architecture" class="beam" style="--c:var(--arch)" d="M 128 298 Q 200 262 276 232"/>
+              <path id="beam-standard"     class="beam" style="--c:var(--std)" d="M 512 298 Q 440 262 364 232"/>
+
+              <!-- 光束上的能量脉冲（评审启动后流动） -->
+              <g id="pulses">
+                <circle id="pulse-security"     r="2.6" opacity="0" style="fill:var(--sec)" filter="url(#glow)"><animateMotion dur="1.5s" repeatCount="indefinite"><mpath href="#beam-security"/></animateMotion></circle>
+                <circle id="pulse-performance"  r="2.6" opacity="0" style="fill:var(--perf)" filter="url(#glow)"><animateMotion dur="1.5s" repeatCount="indefinite"><mpath href="#beam-performance"/></animateMotion></circle>
+                <circle id="pulse-architecture" r="2.6" opacity="0" style="fill:var(--arch)" filter="url(#glow)"><animateMotion dur="1.5s" repeatCount="indefinite"><mpath href="#beam-architecture"/></animateMotion></circle>
+                <circle id="pulse-standard"     r="2.6" opacity="0" style="fill:var(--std)" filter="url(#glow)"><animateMotion dur="1.5s" repeatCount="indefinite"><mpath href="#beam-standard"/></animateMotion></circle>
+              </g>
+
+              <!-- 中央扫描涟漪（评审进行时扩散） -->
+              <g id="hubRipples" opacity="0">
+                <circle class="ripple" cx="320" cy="210" r="24" stroke="rgba(94,160,255,.55)">
+                  <animate attributeName="r" from="24" to="185" dur="3s" begin="0s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" from=".6" to="0" dur="3s" begin="0s" repeatCount="indefinite"/>
+                </circle>
+                <circle class="ripple" cx="320" cy="210" r="24" stroke="rgba(255,184,77,.45)">
+                  <animate attributeName="r" from="24" to="185" dur="3s" begin="-1s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" from=".6" to="0" dur="3s" begin="-1s" repeatCount="indefinite"/>
+                </circle>
+                <circle class="ripple" cx="320" cy="210" r="24" stroke="rgba(94,160,255,.55)">
+                  <animate attributeName="r" from="24" to="185" dur="3s" begin="-2s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" from=".6" to="0" dur="3s" begin="-2s" repeatCount="indefinite"/>
+                </circle>
+              </g>
+
+              <!-- 核心外圈旋转六边形 -->
+              <polygon class="ring-hex" points="320,156 374,183 374,237 320,264 266,237 266,183"/>
 
               <!-- 中央核心 -->
               <g id="hub">
@@ -610,6 +668,7 @@
               <!-- 四节点 -->
               <g class="node" id="node-security" style="--c:var(--sec)">
                 <rect class="node-box" x="46" y="66" width="164" height="62"/>
+                <circle class="ndot" cx="53" cy="73" r="3"/>
                 <text class="node-idx" x="60" y="84">01</text>
                 <text class="node-name" x="82" y="88">安全评审</text>
                 <text class="node-sub" x="82" y="102">SECURITY</text>
@@ -618,6 +677,7 @@
               </g>
               <g class="node" id="node-performance" style="--c:var(--perf)">
                 <rect class="node-box" x="430" y="66" width="164" height="62"/>
+                <circle class="ndot" cx="437" cy="73" r="3"/>
                 <text class="node-idx" x="444" y="84">02</text>
                 <text class="node-name" x="466" y="88">性能评审</text>
                 <text class="node-sub" x="466" y="102">PERFORMANCE</text>
@@ -626,6 +686,7 @@
               </g>
               <g class="node" id="node-architecture" style="--c:var(--arch)">
                 <rect class="node-box" x="46" y="292" width="164" height="62"/>
+                <circle class="ndot" cx="53" cy="299" r="3"/>
                 <text class="node-idx" x="60" y="310">03</text>
                 <text class="node-name" x="82" y="314">架构评审</text>
                 <text class="node-sub" x="82" y="328">ARCHITECTURE</text>
@@ -634,6 +695,7 @@
               </g>
               <g class="node" id="node-standard" style="--c:var(--std)">
                 <rect class="node-box" x="430" y="292" width="164" height="62"/>
+                <circle class="ndot" cx="437" cy="299" r="3"/>
                 <text class="node-idx" x="444" y="310">04</text>
                 <text class="node-name" x="466" y="314">规范评审</text>
                 <text class="node-sub" x="466" y="328">CONVENTION</text>
@@ -641,6 +703,7 @@
                 <text class="node-level" x="580" y="346" text-anchor="end" id="nl-standard" fill="#35E0A1"></text>
               </g>
             </svg>
+            <div class="arena-log" id="arenaLog"></div>
           </div>
         </div>
 
@@ -1031,6 +1094,8 @@ function setNode(key, state, stateText, levelText, levelColor) {
   if (nl) { nl.textContent = levelText || ""; nl.setAttribute("fill", levelColor || "#3E5A8C"); }
   const beam = document.getElementById("beam-" + key);
   if (beam) beam.setAttribute("class", "beam " + (state === "run" ? "live" : state === "done" ? "done" : ""));
+  const pulse = document.getElementById("pulse-" + key);
+  if (pulse) pulse.setAttribute("opacity", state ? ".95" : "0");
 }
 
 function setHub(text, flash) {
@@ -1038,6 +1103,26 @@ function setHub(text, flash) {
   const s = document.getElementById("hubStatus");
   if (s) s.textContent = text;
   if (hub) hub.setAttribute("class", flash ? "hub-flash" : "");
+  const rp = document.getElementById("hubRipples");
+  if (rp) rp.classList.toggle("on", /评审中|识别中|消解中|并行进行/.test(text));
+}
+
+/* 态势活动日志（最新在上，最多 4 条） */
+function arenaLog(html) {
+  const box = document.getElementById("arenaLog");
+  if (!box) return;
+  const d = document.createElement("div");
+  d.innerHTML = html;
+  box.prepend(d);
+  while (box.children.length > 4) box.removeChild(box.lastChild);
+}
+const SKILL_NO = {};
+function skillTag(key) {
+  if (!SKILL_NO[key]) {
+    const i = SKILLS.findIndex(x => x.key === key);
+    SKILL_NO[key] = "S" + (i >= 0 ? i + 1 : "?") + " " + (SKILLS[i] ? SKILLS[i].name : key);
+  }
+  return SKILL_NO[key];
 }
 
 /* ============================================================
@@ -1141,6 +1226,7 @@ function applySkill(key, payload) {
   }
   const ms = payload.ms ? (payload.ms / 1000).toFixed(1) + "s" : "";
   setNode(key, "done", "完成 " + ms, label, SEV_COLOR[level]);
+  arenaLog("✓ " + skillTag(key) + " 返回" + (ms ? " · " + ms : "") + " · <em>" + label + "</em>");
   setHub(doneCount < 4 ? "已收 " + doneCount + "/4 路结论 · 冲突识别中…" : "四路结论就绪 · 冲突消解中…", false);
 }
 
@@ -1155,6 +1241,7 @@ function applyError(key, name, msg) {
   doneCount++;
   counter.textContent = doneCount + " / 4";
   setNode(key, "", "中断", "", "");
+  arenaLog("✗ " + skillTag(key) + " 评审中断");
 }
 
 function applyConflict(text) {
@@ -1164,10 +1251,12 @@ function applyConflict(text) {
     cfCount.textContent = "";
     cfBody.innerHTML = '<div class="cf-txt">' + toParagraphs(text).map(p => "<p>" + inline(p) + "</p>").join("") + "</div>";
     setHub("多方共识 · 无对抗性冲突", true);
+    arenaLog("◈ 冲突消解 · 多方共识，无对抗性冲突");
     return;
   }
 
   cfCount.textContent = parsed.items.length + " 项冲突";
+  arenaLog("◈ <b>冲突消解完成</b> · " + parsed.items.length + " 项冲突已裁决");
   let html = "";
 
   parsed.items.forEach(it => {
@@ -1262,7 +1351,9 @@ async function run() {
   SKILLS.forEach((s, i) => setTimeout(() => {
     if (!running) return;
     setNode(s.key, "run", "评审中…", "");
+    arenaLog("▸ " + skillTag(s.key) + " 评审中…");
   }, 300 + i * 260));
+  arenaLog("▸ <b>代码提交</b> · " + (codeInput.value ? codeInput.value.split("\n").length : 0) + " 行 · 四路并行启动");
   setHub("四路评审并行进行中…", false);
 
   const t0 = performance.now();
