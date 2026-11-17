@@ -99,7 +99,7 @@ python -m uvicorn main:app --host 127.0.0.1 --port 8000
 
 打开 <http://127.0.0.1:8000> ，粘贴代码，点「启动评审」。四路评审并发返回，约 20–60 秒（视模型负载），页面右上角显示当前模式。
 
-Windows 用户可直接双击 `backend/run.bat`。
+**Windows 一键安装**：双击 `backend/install.bat`，自动完成依赖安装与 `.env` 初始化，无需手动敲命令；装好后双击 `backend/run.bat` 启动。
 
 ### 方式三：在码道平台复现原始流水线
 
