@@ -222,6 +222,20 @@
   .dn-legend { flex: 0 0 auto; display: flex; flex-direction: column; gap: 9px; font-size: 11.5px; color: var(--ink-2); padding-right: 8px; }
   .dn-legend .lg-row i { display: inline-block; width: 8px; height: 8px; margin-right: 7px; border-radius: 2px; vertical-align: middle; }
   .dn-legend .lg-row b { color: #EAF5FF; font-weight: 600; }
+  /* 数据来源徽标 */
+  .ch-src { font-family: var(--mono); font-size: 9.5px; letter-spacing: .12em; padding: 2px 8px; border: 1px solid; }
+  .ch-src.idle { color: var(--ink-3); border-color: rgba(95,127,180,.35); }
+  .ch-src.busy { color: var(--perf); border-color: rgba(255,184,77,.5); animation: srcBlink 1.1s ease-in-out infinite; }
+  .ch-src.done { color: var(--std); border-color: rgba(53,224,161,.5); box-shadow: 0 0 10px rgba(53,224,161,.16); }
+  @keyframes srcBlink { 50% { opacity: .45; } }
+  /* 无数据占位 */
+  .cv-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; padding: 6px 10px; }
+  .cv-empty b { font-size: 12px; font-weight: 600; color: var(--ink-2); letter-spacing: .06em; }
+  .cv-empty em { font-style: normal; font-size: 10.5px; color: var(--ink-4); line-height: 1.6; max-width: 240px; }
+  .cv-empty .ce-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-4); box-shadow: 0 0 8px currentColor; }
+  .cv-empty.live .ce-dot { background: var(--perf); box-shadow: 0 0 10px var(--perf); animation: srcBlink 1s ease-in-out infinite; }
+  .ce-btn { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; color: var(--cyan); background: rgba(53,198,255,.08); border: 1px solid rgba(53,198,255,.45); padding: 4px 12px; cursor: pointer; margin-left: 8px; }
+  .ce-btn:hover { background: rgba(53,198,255,.18); box-shadow: 0 0 14px rgba(53,198,255,.25); }
 
   /* ================= 左：代码提交台 ================= */
   .cases { flex: 0 0 auto; display: flex; gap: 7px; padding: 10px 14px 0; flex-wrap: wrap; }
@@ -771,7 +785,7 @@
         <div class="panel hide p-charts" id="chartBox"><i class="ck1"></i>
           <div class="p-hd">
             <span class="p-tag">07</span><div class="p-mid"><h2>数据分析</h2><span class="p-en">ANALYTICS</span></div>
-            <div class="right"><span class="counter" id="chartCase"></span></div>
+            <div class="right"><span class="ch-src idle" id="chartSrc">未评审</span><span class="counter" id="chartCase"></span></div>
           </div>
           <div class="charts-grid">
             <div class="chart-card"><h5>四路风险等级雷达 <em>RADAR</em></h5><div class="cv" id="cvRadar"></div></div>
@@ -1407,6 +1421,10 @@ async function run() {
   runBtn.disabled = true;
   for (const k in liveTexts) delete liveTexts[k];
   for (const k in liveMs) delete liveMs[k];
+  reviewState.done = false;
+  reviewState.mode = "";
+  reviewState.at = "";
+  renderCharts();
 
   buildCards();
   setState("busy", "评审中");
@@ -1444,13 +1462,18 @@ async function run() {
   stampReviewTime();
   running = false;
   runBtn.disabled = false;
+  reviewState.done = true;
+  reviewState.mode = live ? "live" : "sample";
+  renderCharts();
 }
 
 function stampReviewTime() {
   const d = new Date();
   const p = n => String(n).padStart(2, "0");
+  const at = p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
   const el = document.getElementById("lastReview");
-  if (el) el.textContent = "最近评审 " + p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+  if (el) el.textContent = "最近评审 " + at;
+  reviewState.at = at;
 }
 
 async function tryLive(code) {
@@ -1510,8 +1533,9 @@ async function runSample() {
   const jobs = SKILLS.map((s, i) => {
     const item = c.sample.skills[s.key];
     const delay = (item.delay || 1.2) * 1000 + i * 140;
+    const t0 = performance.now();
     return sleep(delay).then(() => {
-      applySkill(s.key, { key: s.key, name: s.name, text: item.text });
+      applySkill(s.key, { key: s.key, name: s.name, text: item.text, ms: Math.round(performance.now() - t0) });
       footNote.textContent = "已收 " + doneCount + "/4 路结论 · 冲突识别中…";
     });
   });
@@ -1621,17 +1645,19 @@ function renderTeach() {
 const LVL_SCORE = { high: 88, mid: 56, low: 24 };
 const LVL_CN2 = { high: "高危", mid: "中风险", low: "低风险" };
 
+/* 本次评审状态：图表只画「本次启动评审」产生的数据，不回退到预设样例 */
+const reviewState = { done: false, mode: "", at: "" };
+
 function chartStats() {
-  const c = CASES[curCase];
   return SKILLS.map(sk => {
-    const src = liveTexts[sk.key] !== undefined ? liveTexts[sk.key] : ((c.sample.skills[sk.key] || {}).text || "");
-    const dLive = liveMs[sk.key] || 0;
-    const dSample = ((c.sample.skills[sk.key] || {}).delay || 0) * 1000;
+    const has = Object.prototype.hasOwnProperty.call(liveTexts, sk.key);
+    const src = has ? (liveTexts[sk.key] || "") : "";
     return {
       key: sk.key, name: sk.name, color: sk.color,
+      has: !!src,
       findings: (src.match(/^\s*(?:S\d+\s*[｜|]|位置[：:])/gm) || []).length,
-      level: parseLevel(src),
-      ms: dLive || dSample,
+      level: src ? parseLevel(src) : "",
+      ms: liveMs[sk.key] || 0,
       text: src
     };
   });
@@ -1639,16 +1665,52 @@ function chartStats() {
 
 function renderCharts() {
   const box = document.getElementById("chartBox");
-  if (!box || box.classList.contains("hide")) return;
+  if (!box) return;
   const c = CASES[curCase];
-  document.getElementById("chartCase").textContent = c.tag + " " + c.name;
   const st = chartStats();
+  const got = st.filter(x => x.has).length;
+
+  document.getElementById("chartCase").textContent = c.tag + " " + c.name;
+
+  const srcEl = document.getElementById("chartSrc");
+  if (srcEl) {
+    let txt, cls;
+    if (got === 0) { txt = running ? "评审启动中" : "未评审"; cls = running ? "busy" : "idle"; }
+    else if (running) { txt = "评审中 " + got + "/4"; cls = "busy"; }
+    else { txt = (reviewState.mode === "live" ? "实时评审" : "样例回放") + " · " + reviewState.at; cls = "done"; }
+    srcEl.textContent = txt;
+    srcEl.className = "ch-src " + cls;
+  }
+
+  if (!got) { standby(box); return; }
   renderRadar(st);
   renderDonut(st);
   renderBars(st);
   renderLatency(st);
   renderTop(st);
 }
+
+/* 无本次评审数据时的占位：不画任何假数据 */
+function standby(box) {
+  const busy = running;
+  const msg = busy ? "评审启动中 · 图表随结论生长" : "尚无本次评审数据";
+  const hint = busy
+    ? "四路结论逐条返回，返回一路画一路"
+    : "图表不是预设值：点击「启动评审」，四条曲线与柱状图全部由这一次的真实评审输出计算。";
+  ["cvRadar", "cvDonut", "cvBars", "cvLatency"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '<div class="cv-empty' + (busy ? " live" : "") + '"><span class="ce-dot"></span><b>' + msg + "</b><em>" + hint + "</em></div>";
+  });
+  const top = document.getElementById("cvTop");
+  if (top) {
+    top.innerHTML = busy
+      ? '<div class="rank-empty">' + hint + "</div>"
+      : '<div class="rank-empty">' + hint + '<button class="ce-btn" data-act="run">启动评审</button></div>';
+    const btn = top.querySelector('[data-act="run"]');
+    if (btn) btn.onclick = run;
+  }
+}
+
 
 /* 四路风险雷达 */
 function renderRadar(st) {
@@ -1665,7 +1727,7 @@ function renderRadar(st) {
     const [x, y] = pt(a, R);
     g += '<line x1="' + cx + '" y1="' + cy + '" x2="' + x.toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="rgba(84,160,255,.18)"/>';
   });
-  const dps = st.map((x, i) => pt(angs[i], R * (LVL_SCORE[x.level] || 20) / 100));
+  const dps = st.map((x, i) => pt(angs[i], R * (x.has ? (LVL_SCORE[x.level] || 20) : 8) / 100));
   g += '<polygon points="' + dps.map(p => p.map(v => v.toFixed(1)).join(",")).join(" ") + '" fill="rgba(53,198,255,.20)" stroke="#35C6FF" stroke-width="1.6" filter="url(#glow)"/>';
   dps.forEach((p, i) => {
     g += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="3" style="fill:' + st[i].color + '" filter="url(#glow)"/>';
@@ -1674,7 +1736,7 @@ function renderRadar(st) {
   st.forEach((x, i) => {
     const [lx, ly] = lblPos[i];
     const anc = i === 1 ? "start" : i === 3 ? "end" : "middle";
-    g += '<text x="' + lx + '" y="' + ly + '" text-anchor="' + anc + '" font-size="10.5" style="fill:' + x.color + '">' + x.name + ' · ' + LVL_CN2[x.level] + '</text>';
+    g += '<text x="' + lx + '" y="' + ly + '" text-anchor="' + anc + '" font-size="10.5" style="fill:' + x.color + '">' + x.name + ' · ' + (x.has ? LVL_CN2[x.level] : "待返回") + '</text>';
   });
   document.getElementById("cvRadar").innerHTML =
     '<svg viewBox="0 0 300 190" preserveAspectRatio="xMidYMid meet"><defs></defs>' + g + '</svg>';
@@ -1683,8 +1745,8 @@ function renderRadar(st) {
 /* 严重度分布环形图 */
 function renderDonut(st) {
   const cnt = { high: 0, mid: 0, low: 0 };
-  st.forEach(x => cnt[x.level]++);
-  const total = st.length;
+  st.forEach(x => { if (x.has && cnt[x.level] !== undefined) cnt[x.level]++; });
+  const total = st.filter(x => x.has).length || 1;
   const C = 2 * Math.PI * 52;
   const segs = [["high", "var(--sec)"], ["mid", "var(--perf)"], ["low", "var(--std)"]];
   let off = 0, arcs = "";
@@ -1727,10 +1789,10 @@ function renderLatency(st) {
   let g = '<line x1="30" y1="' + base + '" x2="' + (W - 8) + '" y2="' + base + '" stroke="rgba(84,160,255,.35)"/>';
   st.forEach((x, i) => {
     const secs = x.ms / 1000;
-    const bh = Math.max(4, Math.round((base - 34) * secs / max));
+    const bh = x.ms ? Math.max(4, Math.round((base - 34) * secs / max)) : 0;
     const x0 = 36 + i * gap;
     g += '<rect x="' + x0 + '" y="' + (base - bh) + '" width="' + bw + '" height="' + bh + '" style="fill:' + x.color + '" opacity=".82" filter="url(#glow)"/>' +
-      '<text x="' + (x0 + bw / 2) + '" y="' + (base - bh - 6) + '" text-anchor="middle" font-size="11" fill="#DCEBFF">' + secs.toFixed(1) + 's</text>' +
+      '<text x="' + (x0 + bw / 2) + '" y="' + (base - bh - 6) + '" text-anchor="middle" font-size="11" fill="#DCEBFF">' + (x.ms ? secs.toFixed(1) + 's' : '—') + '</text>' +
       '<text x="' + (x0 + bw / 2) + '" y="' + (base + 14) + '" text-anchor="middle" font-size="9.5" fill="#5F7FB4">' + x.name.slice(0, 2) + '</text>';
   });
   document.getElementById("cvLatency").innerHTML =
