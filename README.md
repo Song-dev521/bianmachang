@@ -12,6 +12,8 @@
 ![Platform](https://img.shields.io/badge/Built%20on-华为云码道%20CodeArts-C7000A)
 ![Competition](https://img.shields.io/badge/2026%20华为开发者大赛-智能体创新赛-F471B5)
 
+🔗 开源仓库：[GitHub](https://github.com/Song-dev521/bianmachang) ｜ [Gitee](https://gitee.com/Sstars-1/bianmachang)
+
 <img src="docs/assets/front-demo.jpg" width="92%" alt="辩码场前端真实运行截图：星空评审大屏，四路评审并发返回，右侧为结论流与指标灯牌" />
 
 </div>
