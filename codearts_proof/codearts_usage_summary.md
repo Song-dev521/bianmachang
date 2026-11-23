@@ -16,7 +16,7 @@
 | 智能体（Agent）创建 | 创建主智能体 `bianmachang` 作为流水线宿主 | `screenshot/agent_01_bianmachang_create.png` |
 | Skill 技能封装 | 将 4 个评审视角 + 1 个冲突汇总分别封装为 5 个独立 Skill，单一职责、互不越界 | `screenshot/skill_0*_0*_*.png`（每个 Skill 的创建信息、平台内 Prompt 配置页） |
 | Prompt 在线调试 | 每个 Skill 在平台内逐版调试：v1 简单版 → final 结构化版，迭代理由见 `skill_prompt/` | `screenshot/skill_*_version_compare.png` |
-| 智能体 IDE | 在码道 IDE 内编写测试用例代码、直接调用智能体对话验证 | `screenshot/case_*.py.png`（IDE 内编辑 + 运行同屏） |
+| 智能体 IDE | 在码道 IDE 内编写测试用例代码、直接调用智能体对话验证 | `testcase/case_*.py.png`（IDE 内编辑 + 运行同屏） |
 | 流水线编排 | 将 4 个评审 Skill 配置为**并行分支**，输出汇聚到冲突汇总 Skill | `screenshot/agent_02_full_pipeline_demo*.png`（4 张编排视图） |
 | 流水线运行与日志 | 端到端联调并留存完整运行输出 | `run_log/pipeline_run_test.md` |
 | 代码版本管理 | 平台内代码仓（Gitee）托管，Skill 归档分 commit 提交 | `screenshot/gitee_new_repo_create.png`、`screenshot/skill_*_05_git_push.png` |
@@ -38,7 +38,7 @@
 ## 五、资源与产物归档
 
 - Skill Prompt 双版本 + 修改理由：`skill_prompt/`（10 份 Prompt + 5 份说明）
-- 平台操作与运行截图：`screenshot/`（40+ 张）
+- 平台操作与运行截图：`screenshot/`（134 张）
 - 运行输出记录：`run_log/`（8 份 md）
 - 测试代码与用例运行截图：`testcase/`
 - 测试报告：`test_report.md`

@@ -74,6 +74,6 @@
 | 单 Skill 测试对话导出（5 份） | `run_log/skill_*_test.md` |
 | 流水线联调完整输出 | `run_log/pipeline_run_test.md` |
 | 码道对话过程完整导出（2 份） | `run_log/华为云码道CodeArts代码智能体对话过程*.md` |
-| 测试代码（4 份） | `testcase/*.py` |
+| 测试代码（4 份） | `testcases/*.py`；`testcase/` 存放运行截图 |
 | 用例运行截图 | `testcase/case_*.png`、`screenshot/` |
 | Skill Prompt 双版本迭代记录 | `skill_prompt/` |

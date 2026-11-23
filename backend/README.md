@@ -13,6 +13,8 @@ python -m uvicorn main:app --host 127.0.0.1 --port 8000
 然后浏览器打开 <http://127.0.0.1:8000>（后端会直接托管 `../index.html`）。
 双击 `run.bat` 等价于以上过程。
 
+> 脚本版本说明：`install.bat` / `run.bat` 当前为纯 ASCII 重写版——早期由码道生成的含中文注释脚本在 Windows cmd 下会因编码解析截断而双击闪退，故重写（第二代生成原稿留档于 `../codearts_proof/run_log/第二轮_生成脚本_*.bat`，体现真实迭代过程）。
+
 ## 运行模式
 
 | MODE | 行为 |

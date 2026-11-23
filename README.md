@@ -145,8 +145,8 @@ python -m uvicorn main:app --host 127.0.0.1 --port 8000
 ├── testcases/                 # 4 份测试用例源码
 ├── codearts_proof/            # 码道开发证据链
 │   ├── skill_prompt/          #   双版本 Prompt + 修改理由
-│   ├── run_log/               #   9 次真实对话/流水线运行记录
-│   ├── screenshot/            #   40+ 张过程截图
+│   ├── run_log/               #   17 份真实对话/流水线运行记录（两轮）
+│   ├── screenshot/            #   134 张过程截图（两轮）
 │   ├── testcase/              #   用例运行截图
 │   ├── test_report.md         #   测试报告
 │   ├── codearts_usage_summary.md
